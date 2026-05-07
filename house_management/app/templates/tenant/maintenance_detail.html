@@ -1,0 +1,84 @@
+{% extends "shared/base.html" %}
+{% block title %}{{ request.ticket_number }}{% endblock %}
+{% block page_title %}Maintenance Request{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div><h1 class="page-title">{{ request.title }}</h1><p class="page-subtitle">{{ request.ticket_number }} · Submitted {{ request.submitted_at.strftime('%d %b %Y') }}</p></div>
+  <a href="{{ url_for('tenant.maintenance') }}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+<div class="d-grid" style="grid-template-columns:1fr 1fr;gap:20px;">
+  <div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div class="card-title">Details</div>
+        <div style="display:flex;gap:8px;">
+          <span class="badge {% if request.urgency=='emergency' %}badge-danger{% elif request.urgency=='urgent' %}badge-warning{% else %}badge-neutral{% endif %}">{{ request.urgency }}</span>
+          <span class="badge {% if request.status in ['completed','closed'] %}badge-success{% elif request.status in ['in_progress','assigned'] %}badge-info{% else %}badge-warning{% endif %}">{{ request.status.replace('_',' ') }}</span>
+        </div>
+      </div>
+      <p style="color:var(--text-secondary);line-height:1.7;margin-bottom:12px;">{{ request.description }}</p>
+      <div style="font-size:0.825rem;color:var(--text-muted);display:flex;gap:16px;flex-wrap:wrap;">
+        <span><i class="bi bi-tag"></i> {{ request.category }}</span>
+        <span><i class="bi bi-house"></i> Unit {{ request.unit.unit_number if request.unit else '—' }}</span>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><div class="card-title">Messages</div></div>
+      <div style="max-height:300px;overflow-y:auto;">
+        {% for msg in request.messages %}
+        <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="font-weight:600;font-size:0.825rem;">{{ msg.sender.full_name }}</span>
+            <span class="badge badge-neutral" style="font-size:0.62rem;">{{ msg.sender.role }}</span>
+            <span class="text-xs text-muted" style="margin-left:auto;">{{ msg.created_at.strftime('%d/%m %H:%M') }}</span>
+          </div>
+          <p style="font-size:0.875rem;color:var(--text-secondary);">{{ msg.message }}</p>
+        </div>
+        {% else %}
+        <p class="text-muted text-sm" style="padding:10px 0;">No messages yet.</p>
+        {% endfor %}
+      </div>
+      <form method="POST" action="{{ url_for('tenant.maintenance_message', request_id=request.id) }}" style="margin-top:12px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="input-group">
+          <input class="form-control" name="message" placeholder="Add a message…" required/>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+        </div>
+      </form>
+    </div>
+    {% if request.status == 'completed' and not request.tenant_rating %}
+    <div class="card" style="border-color:var(--gold);border-left:3px solid var(--gold);">
+      <div class="card-header"><div class="card-title">Rate this Job</div></div>
+      <form method="POST" action="{{ url_for('tenant.rate_maintenance', request_id=request.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="form-group">
+          <div style="display:flex;gap:8px;font-size:1.5rem;margin-bottom:10px;">
+            {% for i in range(1,6) %}<span style="cursor:pointer;" onclick="document.getElementById('rating').value={{ i }};document.querySelectorAll('.star').forEach((s,j)=>s.style.color=j<{{ i }}?'var(--gold)':'var(--text-muted)');" class="star" style="color:var(--text-muted);">★</span>{% endfor %}
+          </div>
+          <input type="hidden" name="rating" id="rating" required/>
+        </div>
+        <div class="form-group"><textarea class="form-control" name="feedback" placeholder="Optional feedback for the caretaker…" rows="2"></textarea></div>
+        <button type="submit" class="btn btn-gold"><i class="bi bi-star-fill"></i> Submit Rating</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  <div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Status Timeline</div></div>
+      <div class="timeline">
+        {% for h in request.status_history %}
+        <div class="timeline-item">
+          <div class="timeline-dot {{ 'active' if loop.last }}">✓</div>
+          <div class="timeline-content">
+            <div class="timeline-title">{{ h.status.replace('_',' ')|title }}</div>
+            <div class="timeline-time">{{ h.changed_at.strftime('%d/%m %H:%M') }}</div>
+            {% if h.notes %}<div class="timeline-body">{{ h.notes }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

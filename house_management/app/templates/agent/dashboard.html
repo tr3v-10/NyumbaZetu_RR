@@ -1,0 +1,41 @@
+{% extends "shared/base.html" %}
+{% block title %}Agent Dashboard{% endblock %}
+{% block page_title %}Agency Dashboard{% endblock %}
+{% block content %}
+<div class="page-header"><h1 class="page-title">Welcome, {{ current_user.first_name }} 🤝</h1></div>
+<div class="stat-grid" style="margin-bottom:24px;">
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-buildings" style="color:var(--accent);"></i></div><div class="stat-value">{{ managed_properties|length }}</div><div class="stat-label">Managed Properties</div></div>
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-door-open" style="color:var(--warning);"></i></div><div class="stat-value">{{ vacant_units|length }}</div><div class="stat-label">Vacant Units</div></div>
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-file-text" style="color:var(--info);"></i></div><div class="stat-value">{{ active_leases|length }}</div><div class="stat-label">Active Leases</div></div>
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-coin" style="color:var(--gold);"></i></div><div class="stat-value" style="font-size:1.2rem;">{{ total_commission | kes }}</div><div class="stat-label">Commission YTD</div></div>
+</div>
+<div class="d-grid" style="grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Vacant Units — Available Now</div><a href="{{ url_for('agent.listings') }}" class="btn btn-sm btn-secondary">All Listings</a></div>
+    {% for u in vacant_units[:5] %}
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="font-weight:600;font-size:0.875rem;">Unit {{ u.unit_number }} — {{ u.unit_type.replace('_',' ')|title }}</div>
+      <div class="text-xs text-muted">{{ u.property.name }} · {{ u.property.county }}</div>
+      <div class="text-accent font-bold" style="font-size:0.875rem;margin-top:2px;">{{ u.rent_amount | kes }}/mo</div>
+    </div>
+    {% else %}
+    <p class="text-muted text-sm" style="padding:10px 0;">No vacant units.</p>
+    {% endfor %}
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Recent Leases</div><a href="{{ url_for('agent.leases') }}" class="btn btn-sm btn-secondary">All</a></div>
+    {% for l in active_leases[:5] %}
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="font-weight:600;font-size:0.875rem;">{{ l.tenant.full_name }}</div>
+      <div class="text-xs text-muted">{{ l.unit.unit_number }}, {{ l.unit.property.name }}</div>
+      <div class="d-flex justify-between" style="margin-top:2px;font-size:0.825rem;">
+        <span class="text-accent">{{ l.rent_amount | kes }}/mo</span>
+        <span class="text-muted">→ {{ l.end_date.strftime('%d/%m/%Y') }}</span>
+      </div>
+    </div>
+    {% else %}
+    <p class="text-muted text-sm" style="padding:10px 0;">No active leases.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

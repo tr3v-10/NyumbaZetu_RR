@@ -1,0 +1,71 @@
+{% extends "shared/base.html" %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <!-- Left Panel -->
+  <div class="auth-panel auth-panel-left">
+    <div class="auth-panel-left-content">
+      <div class="auth-panel-left-logo">
+        <div class="auth-panel-left-icon">🏠</div>
+        <div>
+          <div class="auth-logo-name">NyumbaManager</div>
+          <div class="auth-logo-tag">Property Management · Kenya</div>
+        </div>
+      </div>
+      <div class="auth-tagline">Manage your<br/>property portfolio<br/><em>effortlessly.</em></div>
+      <p style="color:var(--text-secondary);font-size:0.875rem;line-height:1.7;">Kenya's most trusted property management platform. M-Pesa native, bank-integrated, built for landlords from Nairobi to the diaspora.</p>
+      <ul class="auth-features">
+        <li class="auth-feature"><div class="auth-feature-dot">✓</div> M-Pesa STK Push Payments</li>
+        <li class="auth-feature"><div class="auth-feature-dot">✓</div> Real-time Rent Reconciliation</li>
+        <li class="auth-feature"><div class="auth-feature-dot">✓</div> Maintenance Ticket Tracking</li>
+        <li class="auth-feature"><div class="auth-feature-dot">✓</div> Africa's Talking SMS Alerts</li>
+        <li class="auth-feature"><div class="auth-feature-dot">✓</div> Kenya Data Protection Compliant</li>
+      </ul>
+    </div>
+  </div>
+  <!-- Right Panel -->
+  <div class="auth-panel">
+    <div class="auth-form-panel">
+      <div class="auth-form-title">Welcome back</div>
+      <div class="auth-form-sub">Sign in to your account to continue</div>
+      <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input class="form-control" type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="input-group">
+            <input class="form-control" type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password"/>
+            <button type="button" class="btn btn-secondary" onclick="togglePwd()" tabindex="-1" aria-label="Toggle password"><i class="bi bi-eye" id="pwdIcon"></i></button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <label class="form-check" style="margin:0;">
+            <input type="checkbox" name="remember"/> <span>Remember me</span>
+          </label>
+          <a href="{{ url_for('auth.forgot_password') }}" style="font-size:0.825rem;color:var(--accent);">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
+        <p style="text-align:center;margin-top:20px;font-size:0.875rem;color:var(--text-muted);">
+          Don't have an account? <a href="{{ url_for('auth.register') }}">Register</a>
+        </p>
+      </form>
+      <div class="divider"></div>
+      <div style="text-align:center;font-size:0.72rem;color:var(--text-muted);">
+        By signing in you agree to our
+        <a href="{{ url_for('policies.terms') }}">Terms</a> and
+        <a href="{{ url_for('policies.privacy') }}">Privacy Policy</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function togglePwd(){
+  const f=document.getElementById('password'),i=document.getElementById('pwdIcon');
+  if(f.type==='password'){f.type='text';i.className='bi bi-eye-slash';}
+  else{f.type='password';i.className='bi bi-eye';}
+}
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "shared/base.html" %}
+{% block title %}My Invoices{% endblock %}
+{% block page_title %}Invoices & Pay{% endblock %}
+{% block content %}
+<div class="page-header"><h1 class="page-title">My Invoices</h1></div>
+<div class="tabs">
+  {% for s in ['all','sent','partial','overdue','paid'] %}
+  <a href="{{ url_for('tenant.invoices', status=s) }}" class="tab {{ 'active' if status_filter==s or (s=='all' and not status_filter) }}">{{ s|title }}</a>
+  {% endfor %}
+</div>
+{% for inv in invoices %}
+<div class="card" style="margin-bottom:14px;{% if inv.is_overdue %}border-left:3px solid var(--danger);{% elif inv.status=='paid' %}border-left:3px solid var(--success);{% else %}border-left:3px solid var(--accent);{% endif %}">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <code style="font-size:0.875rem;font-weight:700;">{{ inv.invoice_number }}</code>
+      <div class="text-muted text-sm" style="margin-top:4px;">{{ inv.billing_period_start.strftime('%B %Y') }} · Due {{ inv.due_date.strftime('%d %b %Y') }}</div>
+      {% if inv.is_overdue %}<div class="text-xs" style="color:var(--danger);">⚠ {{ inv.days_overdue }} days overdue</div>{% endif %}
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:1.4rem;font-weight:700;color:{% if inv.status=='paid' %}var(--success){% elif inv.is_overdue %}var(--danger){% else %}var(--accent){% endif %};">{{ inv.balance_due | kes }}</div>
+      <div class="text-xs text-muted">of {{ inv.total_amount | kes }} total</div>
+      <span class="badge {% if inv.status=='paid' %}badge-success{% elif inv.status=='overdue' %}badge-danger{% elif inv.status=='partial' %}badge-warning{% else %}badge-info{% endif %} mt-1">{{ inv.status|upper }}</span>
+    </div>
+  </div>
+  <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:16px;font-size:0.825rem;color:var(--text-secondary);flex-wrap:wrap;">
+    {% if inv.rent_amount %}<span>Rent: <strong>{{ inv.rent_amount | kes }}</strong></span>{% endif %}
+    {% if inv.service_charge %}<span>Service: <strong>{{ inv.service_charge | kes }}</strong></span>{% endif %}
+    {% if inv.water_charge %}<span>Water: <strong>{{ inv.water_charge | kes }}</strong></span>{% endif %}
+    {% if inv.garbage_charge %}<span>Garbage: <strong>{{ inv.garbage_charge | kes }}</strong></span>{% endif %}
+    {% if inv.late_fee %}<span class="text-danger">Late Fee: <strong>{{ inv.late_fee | kes }}</strong></span>{% endif %}
+  </div>
+  {% if inv.status != 'paid' %}
+  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="{{ url_for('tenant.pay_invoice', invoice_id=inv.id) }}" class="btn btn-primary btn-sm"><i class="bi bi-phone"></i> Pay via M-Pesa</a>
+    <a href="{{ url_for('tenant.pay_invoice', invoice_id=inv.id) }}?method=bank" class="btn btn-secondary btn-sm"><i class="bi bi-bank"></i> Bank Transfer</a>
+  </div>
+  {% else %}
+  <div style="margin-top:10px;color:var(--success);font-size:0.875rem;"><i class="bi bi-check-circle-fill"></i> Paid in full</div>
+  {% endif %}
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-state-icon">🧾</div><div class="empty-state-title">No invoices yet.</div><div class="empty-state-text">Invoices are generated monthly by your landlord.</div></div>
+{% endfor %}
+{% endblock %}

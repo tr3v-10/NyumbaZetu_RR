@@ -1,0 +1,33 @@
+{% extends "shared/base.html" %}
+{% block title %}Caretaker Dashboard{% endblock %}
+{% block page_title %}My Work Orders{% endblock %}
+{% block content %}
+<div class="page-header"><h1 class="page-title">Welcome, {{ current_user.first_name }} 🔧</h1><p class="page-subtitle">{{ open_tasks|length }} open tasks · {{ inspections_due }} inspections due</p></div>
+<div class="stat-grid" style="margin-bottom:24px;">
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-tools" style="color:var(--danger);"></i></div><div class="stat-value">{{ emergency_count }}</div><div class="stat-label">Emergencies</div></div>
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-exclamation-circle" style="color:var(--warning);"></i></div><div class="stat-value">{{ urgent_count }}</div><div class="stat-label">Urgent Tasks</div></div>
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-list-check" style="color:var(--info);"></i></div><div class="stat-value">{{ open_tasks|length }}</div><div class="stat-label">Open Tasks</div></div>
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-check-circle" style="color:var(--success);"></i></div><div class="stat-value">{{ completed_this_month }}</div><div class="stat-label">Completed (Month)</div></div>
+</div>
+{% if open_tasks %}
+<div class="card">
+  <div class="card-header"><div class="card-title">My Work Orders</div><a href="{{ url_for('caretaker.tasks') }}" class="btn btn-sm btn-secondary">All Tasks</a></div>
+  {% for t in open_tasks %}
+  <div style="padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="location.href='{{ url_for('caretaker.task_detail', task_id=t.id) }}'">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div style="font-weight:600;">{{ t.title }}</div>
+        <div class="text-xs text-muted">{{ t.ticket_number }} · Unit {{ t.unit.unit_number if t.unit else '—' }} · {{ t.unit.property.name if t.unit else '—' }}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <span class="badge {% if t.urgency=='emergency' %}badge-danger{% elif t.urgency=='urgent' %}badge-warning{% else %}badge-neutral{% endif %}">{{ t.urgency }}</span>
+        <span class="badge {% if t.status=='in_progress' %}badge-info{% elif t.status=='submitted' %}badge-warning{% else %}badge-neutral{% endif %}">{{ t.status.replace('_',' ') }}</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-title">No open work orders!</div><div class="empty-state-text">All tasks are up to date.</div></div>
+{% endif %}
+{% endblock %}

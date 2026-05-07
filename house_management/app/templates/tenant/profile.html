@@ -1,0 +1,43 @@
+{% extends "shared/base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block content %}
+<div style="max-width:600px;margin:0 auto;">
+  <div class="page-header"><h1 class="page-title">My Profile</h1></div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Personal Details</div></div>
+    <form method="POST" action="{{ url_for('tenant.profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input class="form-control" name="first_name" value="{{ current_user.first_name }}" required/></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input class="form-control" name="last_name" value="{{ current_user.last_name }}" required/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-control" type="email" value="{{ current_user.email }}" disabled title="Contact admin to change email"/></div>
+      <div class="form-group"><label class="form-label">Phone (M-Pesa)</label>
+        <div class="input-group"><span class="input-prefix">+254</span><input class="form-control" name="phone" value="{{ current_user.phone|replace('+254','')|replace('254','') if current_user.phone else '' }}" placeholder="712 345 678"/></div>
+        <div class="form-hint">This number is used for M-Pesa payments and SMS alerts</div>
+      </div>
+      <div class="divider"></div>
+      <div class="card-title" style="margin-bottom:14px;">Notification Preferences</div>
+      <div class="form-group"><label class="form-check"><input type="checkbox" name="notification_sms" {{ 'checked' if current_user.notification_sms }}/> <span>SMS notifications (payment receipts, reminders, maintenance updates)</span></label></div>
+      <div class="form-group"><label class="form-check"><input type="checkbox" name="notification_email" {{ 'checked' if current_user.notification_email }}/> <span>Email notifications</span></label></div>
+      <div class="form-group"><label class="form-check"><input type="checkbox" name="notification_in_app" {{ 'checked' if current_user.notification_in_app }}/> <span>In-app notifications (bell icon)</span></label></div>
+      <div class="divider"></div>
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+    </form>
+  </div>
+  <div class="card" style="margin-top:16px;">
+    <div class="card-header"><div class="card-title">Change Password</div></div>
+    <form method="POST" action="{{ url_for('tenant.profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <input type="hidden" name="change_password" value="1"/>
+      <div class="form-group"><label class="form-label">Current Password</label><input class="form-control" type="password" name="current_password" required/></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">New Password</label><input class="form-control" type="password" name="new_password" required minlength="8"/></div>
+        <div class="form-group"><label class="form-label">Confirm</label><input class="form-control" type="password" name="confirm_password" required/></div>
+      </div>
+      <button type="submit" class="btn btn-secondary">Change Password</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

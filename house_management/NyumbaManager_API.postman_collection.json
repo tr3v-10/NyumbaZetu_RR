@@ -1,0 +1,809 @@
+{
+  "info": {
+    "_postman_id": "nyumba-manager-api-v1",
+    "name": "NyumbaManager API — Full Collection",
+    "description": "Complete API collection for NyumbaManager — Kenya House Management System.\n\nIncludes: Authentication, Super Admin, Landlord, Tenant, Caretaker, Agent, M-Pesa, Bank, and Utility endpoints.\n\n**Setup:**\n1. Set `base_url` variable to your server URL (e.g. http://localhost:5000)\n2. Login via the Auth endpoints to get a session cookie\n3. All state-changing requests require the CSRF token from the login response meta tag\n\n**Kenya-specific notes:**\n- All monetary values are in KES (Kenyan Shillings)\n- M-Pesa phone numbers should be in format 254XXXXXXXXX\n- Payment references follow format NYM{property_id:04d}{unit_number}",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5000", "type": "string" },
+    { "key": "csrf_token", "value": "", "type": "string" },
+    { "key": "landlord_id", "value": "1", "type": "string" },
+    { "key": "property_id", "value": "1", "type": "string" },
+    { "key": "unit_id", "value": "1", "type": "string" },
+    { "key": "lease_id", "value": "1", "type": "string" },
+    { "key": "invoice_id", "value": "1", "type": "string" },
+    { "key": "user_id", "value": "1", "type": "string" },
+    { "key": "maintenance_id", "value": "1", "type": "string" },
+    { "key": "checkout_request_id", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/auth/login",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "email", "value": "admin@nyumba.ke" },
+              { "key": "password", "value": "SecurePass123!" },
+              { "key": "remember", "value": "on" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]},
+            "description": "Login with email and password. Session cookie is returned."
+          }
+        },
+        {
+          "name": "Register — Tenant",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/auth/register",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "email", "value": "newtenant@example.co.ke" },
+              { "key": "first_name", "value": "John" },
+              { "key": "last_name", "value": "Kamau" },
+              { "key": "phone", "value": "0712345678" },
+              { "key": "password", "value": "SecurePass123!" },
+              { "key": "confirm_password", "value": "SecurePass123!" },
+              { "key": "role", "value": "tenant" },
+              { "key": "terms", "value": "on" },
+              { "key": "privacy", "value": "on" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]},
+            "description": "Register a new tenant account."
+          }
+        },
+        {
+          "name": "Register — Landlord",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/auth/register",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "email", "value": "landlord@example.co.ke" },
+              { "key": "first_name", "value": "Grace" },
+              { "key": "last_name", "value": "Wanjiku" },
+              { "key": "phone", "value": "0722345678" },
+              { "key": "password", "value": "SecurePass123!" },
+              { "key": "confirm_password", "value": "SecurePass123!" },
+              { "key": "role", "value": "landlord" },
+              { "key": "terms", "value": "on" },
+              { "key": "privacy", "value": "on" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/auth/forgot-password",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "email", "value": "user@example.co.ke" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Logout",
+          "request": { "method": "GET", "url": "{{base_url}}/auth/logout" }
+        }
+      ]
+    },
+    {
+      "name": "🔴 Super Admin",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": { "method": "GET", "url": "{{base_url}}/admin/dashboard",
+            "description": "Returns system-wide stats including users, properties, revenue, visitor counts." }
+        },
+        {
+          "name": "List Users",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/admin/users?page=1&role=landlord&search=&status=active",
+            "query": [
+              { "key": "page", "value": "1" }, { "key": "role", "value": "landlord" },
+              { "key": "search", "value": "" }, { "key": "status", "value": "active" }
+            ], "host": ["{{base_url}}"], "path": ["admin", "users"] }}
+        },
+        {
+          "name": "User Detail",
+          "request": { "method": "GET", "url": "{{base_url}}/admin/users/{{user_id}}" }
+        },
+        {
+          "name": "Toggle User Active",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/admin/users",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "user_id", "value": "{{user_id}}" },
+              { "key": "action", "value": "toggle_active" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Visitor Logs",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/admin/visitors?page=1&ip=&country=Kenya",
+            "query": [{ "key": "page", "value": "1" }, { "key": "ip", "value": "" }, { "key": "country", "value": "Kenya" }],
+            "host": ["{{base_url}}"], "path": ["admin", "visitors"] },
+            "description": "Forensic visitor logs — IP, MAC, user-agent, geolocation, fingerprint." }
+        },
+        {
+          "name": "Visitor Detail",
+          "request": { "method": "GET", "url": "{{base_url}}/admin/visitors/1" }
+        },
+        {
+          "name": "Audit Logs",
+          "request": { "method": "GET", "url": "{{base_url}}/admin/audit-logs?page=1" }
+        },
+        {
+          "name": "All Properties",
+          "request": { "method": "GET", "url": "{{base_url}}/admin/properties?search=" }
+        },
+        {
+          "name": "System Financials",
+          "request": { "method": "GET", "url": "{{base_url}}/admin/financials?year=2024" }
+        },
+        {
+          "name": "Broadcast Announcement",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/admin/announcements",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "title", "value": "System Maintenance Tonight" },
+              { "key": "message", "value": "NyumbaManager will be under maintenance 11PM–1AM EAT. All services will resume normally." },
+              { "key": "send_sms", "value": "on" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]},
+            "description": "Broadcast to ALL users system-wide with optional SMS via Africa's Talking." }
+        },
+        {
+          "name": "SMS Logs",
+          "request": { "method": "GET", "url": "{{base_url}}/admin/sms-logs?page=1" }
+        },
+        {
+          "name": "Promote to Super Admin",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/admin/create-admin",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "user_id", "value": "{{user_id}}" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Super Admin Stats (JSON)",
+          "request": { "method": "GET", "url": "{{base_url}}/api/stats/super-admin",
+            "description": "JSON API endpoint returning system stats for charts." }
+        }
+      ]
+    },
+    {
+      "name": "🏘 Landlord Portal",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/landlord/dashboard?year=2024&month=3",
+            "query": [{ "key": "year", "value": "2024" }, { "key": "month", "value": "3" }],
+            "host": ["{{base_url}}"], "path": ["landlord", "dashboard"] }}
+        },
+        {
+          "name": "List Properties",
+          "request": { "method": "GET", "url": "{{base_url}}/landlord/properties" }
+        },
+        {
+          "name": "Create Property",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/landlord/properties",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "name", "value": "Sunrise Court" },
+              { "key": "property_type", "value": "apartment_block" },
+              { "key": "county", "value": "Nairobi" },
+              { "key": "sub_county", "value": "Kilimani" },
+              { "key": "street_address", "value": "Off Argwings Kodhek Road, Kilimani" },
+              { "key": "mpesa_paybill", "value": "400200" },
+              { "key": "mpesa_account_name", "value": "Sunrise Rent" },
+              { "key": "bank_name", "value": "Equity Bank" },
+              { "key": "bank_account_number", "value": "1234567890123" },
+              { "key": "bank_branch", "value": "Kilimani" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Property Detail",
+          "request": { "method": "GET", "url": "{{base_url}}/landlord/properties/{{property_id}}" }
+        },
+        {
+          "name": "Add Unit",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/landlord/properties/{{property_id}}/units",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "unit_number", "value": "B3" },
+              { "key": "unit_type", "value": "2br" },
+              { "key": "rent_amount", "value": "28000" },
+              { "key": "deposit_amount", "value": "56000" },
+              { "key": "service_charge", "value": "500" },
+              { "key": "water_charge", "value": "0" },
+              { "key": "garbage_charge", "value": "300" },
+              { "key": "bedrooms", "value": "2" },
+              { "key": "bathrooms", "value": "2" },
+              { "key": "floor", "value": "3" },
+              { "key": "rent_due_day", "value": "5" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "List Units",
+          "request": { "method": "GET", "url": "{{base_url}}/landlord/properties/{{property_id}}/units" }
+        },
+        {
+          "name": "Create Lease",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/landlord/leases/create",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "unit_id", "value": "{{unit_id}}" },
+              { "key": "tenant_email", "value": "tenant@example.co.ke" },
+              { "key": "start_date", "value": "2024-04-01" },
+              { "key": "end_date", "value": "2025-03-31" },
+              { "key": "rent_amount", "value": "28000" },
+              { "key": "deposit_amount", "value": "56000" },
+              { "key": "service_charge", "value": "500" },
+              { "key": "water_charge", "value": "0" },
+              { "key": "garbage_charge", "value": "300" },
+              { "key": "notice_period_days", "value": "30" },
+              { "key": "number_of_occupants", "value": "2" },
+              { "key": "pets_allowed", "value": "off" },
+              { "key": "special_conditions", "value": "No parties after 10PM" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]},
+            "description": "Creates lease and notifies tenant via in-app notification."
+          }
+        },
+        {
+          "name": "List Leases",
+          "request": { "method": "GET", "url": "{{base_url}}/landlord/leases?status=active" }
+        },
+        {
+          "name": "Lease Detail",
+          "request": { "method": "GET", "url": "{{base_url}}/landlord/leases/{{lease_id}}" }
+        },
+        {
+          "name": "Generate Monthly Invoices",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/landlord/invoices/generate",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "month", "value": "4" },
+              { "key": "year", "value": "2024" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]},
+            "description": "Bulk generates rent invoices for all active leases and sends SMS reminders."
+          }
+        },
+        {
+          "name": "List Invoices",
+          "request": { "method": "GET", "url": "{{base_url}}/landlord/invoices?status=overdue" }
+        },
+        {
+          "name": "Record Manual Payment (Cash/Cheque)",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/landlord/payments/record",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "invoice_id", "value": "{{invoice_id}}" },
+              { "key": "amount", "value": "28800" },
+              { "key": "payment_method", "value": "cash" },
+              { "key": "notes", "value": "Cash paid at caretaker office" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "List Payments",
+          "request": { "method": "GET", "url": "{{base_url}}/landlord/payments?method=mpesa" }
+        },
+        {
+          "name": "Maintenance Requests (Landlord)",
+          "request": { "method": "GET", "url": "{{base_url}}/landlord/maintenance?status=awaiting_approval" }
+        },
+        {
+          "name": "Approve Purchase Request",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/landlord/maintenance/{{maintenance_id}}/approve-purchase",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "purchase_id", "value": "1" },
+              { "key": "action", "value": "approve" },
+              { "key": "notes", "value": "Approved. Use petty cash." },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Reject Purchase Request",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/landlord/maintenance/{{maintenance_id}}/approve-purchase",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "purchase_id", "value": "1" },
+              { "key": "action", "value": "reject" },
+              { "key": "notes", "value": "Get a cheaper quote first." },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Record Expense",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/landlord/expenses",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "property_id", "value": "{{property_id}}" },
+              { "key": "category", "value": "maintenance" },
+              { "key": "description", "value": "Replaced kitchen sink tap Unit B3" },
+              { "key": "amount", "value": "1500" },
+              { "key": "expense_date", "value": "2024-04-05" },
+              { "key": "payment_method", "value": "mpesa" },
+              { "key": "vendor_name", "value": "ABC Hardware Westlands" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Financial Reports",
+          "request": { "method": "GET", "url": "{{base_url}}/landlord/reports?year=2024" }
+        },
+        {
+          "name": "Send Property Announcement",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/landlord/announcements",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "property_id", "value": "{{property_id}}" },
+              { "key": "title", "value": "Water Shutdown — Thursday 8AM–12PM" },
+              { "key": "message", "value": "Dear residents, Nairobi Water will shut off supply on Thursday 8AM–12PM for maintenance. Please store water in advance. Apologies for the inconvenience." },
+              { "key": "type", "value": "utility" },
+              { "key": "send_sms", "value": "on" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]},
+            "description": "Sends announcement to all tenants in the property via in-app and optional SMS."
+          }
+        },
+        {
+          "name": "Landlord Stats (JSON)",
+          "request": { "method": "GET", "url": "{{base_url}}/api/stats/landlord?year=2024&month=4" }
+        }
+      ]
+    },
+    {
+      "name": "🔑 Tenant Portal",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": { "method": "GET", "url": "{{base_url}}/tenant/dashboard" }
+        },
+        {
+          "name": "My Invoices",
+          "request": { "method": "GET", "url": "{{base_url}}/tenant/invoices" }
+        },
+        {
+          "name": "Pay Invoice (M-Pesa STK Push)",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/tenant/pay/{{invoice_id}}",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "method", "value": "mpesa" },
+              { "key": "phone", "value": "0712345678" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]},
+            "description": "Initiates Safaricom STK Push. Money flows directly tenant M-Pesa → landlord Paybill."
+          }
+        },
+        {
+          "name": "Pay Invoice (Bank Transfer Reference)",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/tenant/pay/{{invoice_id}}",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "method", "value": "bank" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]},
+            "description": "Returns bank account details + unique payment reference for reconciliation."
+          }
+        },
+        {
+          "name": "Check M-Pesa Payment Status",
+          "request": { "method": "GET", "url": "{{base_url}}/tenant/check-payment-status/{{checkout_request_id}}",
+            "description": "Poll this endpoint after STK Push to check if tenant has completed payment." }
+        },
+        {
+          "name": "Payment History",
+          "request": { "method": "GET", "url": "{{base_url}}/tenant/payments" }
+        },
+        {
+          "name": "Submit Maintenance Request",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/tenant/maintenance",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "title", "value": "Kitchen sink tap leaking badly" },
+              { "key": "description", "value": "The kitchen cold water tap has been dripping constantly for 3 days. Water is pooling under the sink cabinet. Urgently needs attention." },
+              { "key": "category", "value": "plumbing" },
+              { "key": "urgency", "value": "urgent" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Maintenance List",
+          "request": { "method": "GET", "url": "{{base_url}}/tenant/maintenance" }
+        },
+        {
+          "name": "Maintenance Detail",
+          "request": { "method": "GET", "url": "{{base_url}}/tenant/maintenance/{{maintenance_id}}" }
+        },
+        {
+          "name": "Send Maintenance Message",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/tenant/maintenance/{{maintenance_id}}/message",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "message", "value": "Any update on the plumber? Still leaking this morning." },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Rate Completed Maintenance",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/tenant/maintenance/{{maintenance_id}}/rate",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "rating", "value": "5" },
+              { "key": "feedback", "value": "Peter was very professional and fixed it quickly. Thank you!" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Configure Auto-Pay",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/tenant/auto-pay",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "payment_method", "value": "mpesa" },
+              { "key": "mpesa_phone", "value": "0712345678" },
+              { "key": "day_of_month", "value": "5" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]},
+            "description": "Schedule automatic M-Pesa STK Push on a specific day each month."
+          }
+        },
+        {
+          "name": "Notifications",
+          "request": { "method": "GET", "url": "{{base_url}}/tenant/notifications" }
+        },
+        {
+          "name": "My Documents",
+          "request": { "method": "GET", "url": "{{base_url}}/tenant/documents" }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/tenant/messages",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "recipient_id", "value": "{{landlord_id}}" },
+              { "key": "subject", "value": "Lease renewal query" },
+              { "key": "message", "value": "Good afternoon. My lease expires in 60 days. Could we discuss renewal terms?" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/tenant/profile",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "first_name", "value": "John" },
+              { "key": "last_name", "value": "Kamau" },
+              { "key": "phone", "value": "0712345678" },
+              { "key": "notification_sms", "value": "on" },
+              { "key": "notification_email", "value": "on" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Caretaker Portal",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": { "method": "GET", "url": "{{base_url}}/caretaker/dashboard" }
+        },
+        {
+          "name": "Task List",
+          "request": { "method": "GET", "url": "{{base_url}}/caretaker/tasks?status=in_progress" }
+        },
+        {
+          "name": "Task Detail",
+          "request": { "method": "GET", "url": "{{base_url}}/caretaker/tasks/{{maintenance_id}}" }
+        },
+        {
+          "name": "Update Task Status",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/caretaker/tasks/{{maintenance_id}}",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "action", "value": "update_status" },
+              { "key": "status", "value": "in_progress" },
+              { "key": "notes", "value": "Arrived at unit. Assessing the issue now." },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Request Purchase",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/caretaker/tasks/{{maintenance_id}}",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "action", "value": "request_purchase" },
+              { "key": "item_description", "value": "Kitchen mixer tap — 3/4 inch cold water" },
+              { "key": "estimated_cost", "value": "1500" },
+              { "key": "vendor_name", "value": "Tecno Hardware Westlands" },
+              { "key": "vendor_phone", "value": "0700123456" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]},
+            "description": "Sends purchase approval request to landlord. Amount must be approved before purchase."
+          }
+        },
+        {
+          "name": "Upload Receipt After Purchase",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/caretaker/tasks/{{maintenance_id}}",
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "action", "value": "upload_receipt", "type": "text" },
+              { "key": "purchase_request_id", "value": "1", "type": "text" },
+              { "key": "actual_cost", "value": "1400", "type": "text" },
+              { "key": "mpesa_receipt", "value": "QHJ8UI23KL", "type": "text" },
+              { "key": "payment_method", "value": "mpesa", "type": "text" },
+              { "key": "receipt", "src": "/path/to/receipt.jpg", "type": "file" },
+              { "key": "csrf_token", "value": "{{csrf_token}}", "type": "text" }
+            ]},
+            "description": "Upload M-Pesa receipt or shop receipt. Automatically creates expense record."
+          }
+        },
+        {
+          "name": "Mark Task Complete",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/caretaker/tasks/{{maintenance_id}}",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "action", "value": "update_status" },
+              { "key": "status", "value": "completed" },
+              { "key": "notes", "value": "Replaced mixer tap. Tested — no leak. Job done." },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Log Inspection",
+          "request": {
+            "method": "POST", "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{base_url}}/caretaker/inspections",
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "property_id", "value": "{{property_id}}" },
+              { "key": "inspection_type", "value": "routine" },
+              { "key": "scheduled_date", "value": "2024-04-10" },
+              { "key": "status", "value": "completed" },
+              { "key": "notes", "value": "Monthly routine inspection completed. All common areas clean." },
+              { "key": "boiler_pressure_ok", "value": "on" },
+              { "key": "fire_extinguisher_ok", "value": "on" },
+              { "key": "common_area_clean", "value": "on" },
+              { "key": "security_lights_ok", "value": "on" },
+              { "key": "water_pressure_ok", "value": "on" },
+              { "key": "drainage_ok", "value": "on" },
+              { "key": "general_condition", "value": "good" },
+              { "key": "csrf_token", "value": "{{csrf_token}}" }
+            ]}
+          }
+        },
+        {
+          "name": "Inspection List",
+          "request": { "method": "GET", "url": "{{base_url}}/caretaker/inspections" }
+        }
+      ]
+    },
+    {
+      "name": "🤝 Agent Portal",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": { "method": "GET", "url": "{{base_url}}/agent/dashboard" }
+        },
+        {
+          "name": "Listings (Vacant Units)",
+          "request": { "method": "GET", "url": "{{base_url}}/agent/listings" }
+        },
+        {
+          "name": "Agent Leases",
+          "request": { "method": "GET", "url": "{{base_url}}/agent/leases" }
+        },
+        {
+          "name": "Commission Tracker",
+          "request": { "method": "GET", "url": "{{base_url}}/agent/commissions" }
+        },
+        {
+          "name": "Applicants",
+          "request": { "method": "GET", "url": "{{base_url}}/agent/applicants" }
+        }
+      ]
+    },
+    {
+      "name": "💚 M-Pesa API (Daraja)",
+      "item": [
+        {
+          "name": "Initiate STK Push (JSON API)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/mpesa/initiate",
+            "body": { "mode": "raw", "raw": "{\n  \"invoice_id\": 1,\n  \"phone\": \"0712345678\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Initiates M-Pesa STK Push via Daraja API. Returns checkout_request_id for polling."
+          }
+        },
+        {
+          "name": "Query STK Push Status",
+          "request": { "method": "GET", "url": "{{base_url}}/api/mpesa/stk-query/{{checkout_request_id}}",
+            "description": "Query Safaricom for current status of a pending STK Push transaction." }
+        },
+        {
+          "name": "M-Pesa Callback (Safaricom → App)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/mpesa/callback",
+            "body": { "mode": "raw", "raw": "{\n  \"Body\": {\n    \"stkCallback\": {\n      \"MerchantRequestID\": \"29115-34620561-1\",\n      \"CheckoutRequestID\": \"ws_CO_191220191020363925\",\n      \"ResultCode\": 0,\n      \"ResultDesc\": \"The service request is processed successfully.\",\n      \"CallbackMetadata\": {\n        \"Item\": [\n          { \"Name\": \"Amount\", \"Value\": 28800 },\n          { \"Name\": \"MpesaReceiptNumber\", \"Value\": \"NLJ7RT61SV\" },\n          { \"Name\": \"TransactionDate\", \"Value\": 20240405132345 },\n          { \"Name\": \"PhoneNumber\", \"Value\": 254712345678 }\n        ]\n      }\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Safaricom POSTs this to our callback URL after payment. No auth needed — Safaricom initiates. Auto-generates receipt and SMS on success."
+          }
+        },
+        {
+          "name": "M-Pesa Callback — Failed Payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/mpesa/callback",
+            "body": { "mode": "raw", "raw": "{\n  \"Body\": {\n    \"stkCallback\": {\n      \"MerchantRequestID\": \"29115-34620561-2\",\n      \"CheckoutRequestID\": \"ws_CO_191220191020363926\",\n      \"ResultCode\": 1032,\n      \"ResultDesc\": \"Request cancelled by user.\"\n    }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏦 Bank API",
+      "item": [
+        {
+          "name": "Bank Webhook — Equity",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Webhook-Signature", "value": "sha256_signature_here" }],
+            "url": "{{base_url}}/api/bank/webhook/equity?property_id={{property_id}}",
+            "body": { "mode": "raw", "raw": "{\n  \"transactions\": [\n    {\n      \"id\": \"EQT20240405001\",\n      \"date\": \"2024-04-05T14:30:00\",\n      \"description\": \"MOBILE TRANSFER FROM JOHN KAMAU\",\n      \"credit\": 28800.00,\n      \"debit\": 0,\n      \"reference\": \"NYM0001B3\",\n      \"account\": \"1234567890123\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Equity Bank sends new transactions. Reference NYM0001B3 matched against Unit B3 invoice. Auto-reconciles."
+          }
+        },
+        {
+          "name": "Bank Webhook — KCB",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "X-Webhook-Signature", "value": "sha256_signature_here" }],
+            "url": "{{base_url}}/api/bank/webhook/kcb?property_id={{property_id}}",
+            "body": { "mode": "raw", "raw": "{\n  \"transactions\": [\n    {\n      \"id\": \"KCB20240405001\",\n      \"date\": \"2024-04-05T10:15:00\",\n      \"description\": \"PESALINK FROM AMINA OCHIENG\",\n      \"credit\": 25800,\n      \"debit\": 0,\n      \"reference\": \"NYM0001A1\"\n    }\n  ]\n}" }
+          }
+        },
+        {
+          "name": "Parse Bank SMS (Fallback)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/bank/sms-capture",
+            "body": { "mode": "raw", "raw": "{\n  \"sms_text\": \"You have received KES 28,800.00 from JOHN KAMAU on 05/04/2024 at 14:30. Your account balance is KES 450,320.00. Ref: NYM0001B3\",\n  \"bank_name\": \"equity\",\n  \"property_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Fallback for landlords without direct bank API. Mobile app forwards bank SMS for parsing."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Notifications API",
+      "item": [
+        {
+          "name": "Get Unread Notifications",
+          "request": { "method": "GET", "url": "{{base_url}}/api/notifications",
+            "description": "Returns count and list of unread notifications for current user." }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": { "method": "POST", "url": "{{base_url}}/api/notifications/1/read",
+            "header": [{ "key": "X-CSRFToken", "value": "{{csrf_token}}" }] }
+        },
+        {
+          "name": "Mark All Read",
+          "request": { "method": "POST", "url": "{{base_url}}/api/notifications/read-all",
+            "header": [{ "key": "X-CSRFToken", "value": "{{csrf_token}}" }] }
+        }
+      ]
+    },
+    {
+      "name": "📡 Fingerprint API",
+      "item": [
+        {
+          "name": "Submit Browser Fingerprint",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/fingerprint",
+            "body": { "mode": "raw", "raw": "{\n  \"screenWidth\": 1920,\n  \"screenHeight\": 1080,\n  \"colorDepth\": 24,\n  \"devicePixelRatio\": 1,\n  \"timezoneOffset\": -180,\n  \"language\": \"en-KE\",\n  \"platform\": \"Win32\",\n  \"doNotTrack\": \"1\",\n  \"cookieEnabled\": true,\n  \"javaEnabled\": false,\n  \"fingerprint\": \"abc123def_1920_1080\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Frontend JS calls this after page load to enrich visitor log with browser fingerprint data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛠 Utility",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": { "method": "GET", "url": "{{base_url}}/api/health" }
+        },
+        {
+          "name": "Unit Autocomplete",
+          "request": { "method": "GET", "url": "{{base_url}}/api/units/search?q=B" }
+        },
+        {
+          "name": "Policies — Privacy",
+          "request": { "method": "GET", "url": "{{base_url}}/policies/privacy" }
+        },
+        {
+          "name": "Policies — Terms",
+          "request": { "method": "GET", "url": "{{base_url}}/policies/terms" }
+        },
+        {
+          "name": "Policies — Data Protection",
+          "request": { "method": "GET", "url": "{{base_url}}/policies/data-protection" }
+        },
+        {
+          "name": "Policies — Cookie",
+          "request": { "method": "GET", "url": "{{base_url}}/policies/cookie-policy" }
+        },
+        {
+          "name": "Policies — SLA",
+          "request": { "method": "GET", "url": "{{base_url}}/policies/sla" }
+        }
+      ]
+    }
+  ]
+}

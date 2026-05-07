@@ -1,0 +1,83 @@
+{% extends "shared/base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <div class="auth-panel auth-panel-left">
+    <div class="auth-panel-left-content">
+      <div class="auth-panel-left-logo">
+        <div class="auth-panel-left-icon">🏠</div>
+        <div><div class="auth-logo-name">NyumbaManager</div><div class="auth-logo-tag">Property Management · Kenya</div></div>
+      </div>
+      <div class="auth-tagline">Join Kenya's<br/>smartest property<br/><em>platform.</em></div>
+      <p style="color:var(--text-secondary);font-size:0.875rem;line-height:1.7;">Whether you're a landlord managing 2 units or 200, a tenant, caretaker, or property agent — we've got you covered.</p>
+    </div>
+  </div>
+  <div class="auth-panel" style="overflow-y:auto;padding:30px 40px;">
+    <div class="auth-form-panel" style="max-width:480px;">
+      <div class="auth-form-title">Create account</div>
+      <div class="auth-form-sub">Fill in your details to get started</div>
+      <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input class="form-control" type="text" name="first_name" placeholder="John" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name *</label>
+            <input class="form-control" type="text" name="last_name" placeholder="Kamau" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input class="form-control" type="email" name="email" placeholder="john@example.com" required autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number (Safaricom preferred)</label>
+          <div class="input-group">
+            <span class="input-prefix">+254</span>
+            <input class="form-control" type="tel" name="phone" placeholder="712 345 678" pattern="[0-9]{9,10}"/>
+          </div>
+          <div class="form-hint">Used for M-Pesa payments and SMS alerts</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account Type *</label>
+          <select class="form-control" name="role" required>
+            <option value="">— Select your role —</option>
+            <option value="landlord">🏘 Property Owner / Landlord</option>
+            <option value="tenant">🔑 Tenant / Resident</option>
+            <option value="caretaker">🔧 Caretaker</option>
+            <option value="agent">🤝 Property Agent</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Password *</label>
+            <input class="form-control" type="password" name="password" placeholder="Min. 8 characters" required autocomplete="new-password"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password *</label>
+            <input class="form-control" type="password" name="confirm_password" placeholder="Repeat password" required autocomplete="new-password"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" name="terms" required/>
+            <span>I agree to the <a href="{{ url_for('policies.terms') }}" target="_blank">Terms of Service</a> *</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" name="privacy" required/>
+            <span>I accept the <a href="{{ url_for('policies.privacy') }}" target="_blank">Privacy Policy</a> and consent to data processing under Kenya's Data Protection Act 2019 *</span>
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg">Create Account</button>
+        <p style="text-align:center;margin-top:16px;font-size:0.875rem;color:var(--text-muted);">
+          Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

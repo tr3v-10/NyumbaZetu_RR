@@ -1,0 +1,33 @@
+{% extends "shared/base.html" %}
+{% block title %}Cookie Policy{% endblock %}
+{% block page_title %}Cookie Policy{% endblock %}
+{% block content %}
+<div style="max-width:860px;margin:0 auto;">
+  <div class="page-header">
+    <h1 class="page-title">Cookie Policy</h1>
+    <p class="page-subtitle">Last updated: 1 January 2025 · Effective for all NyumbaManager users</p>
+  </div>
+  <div class="card" style="line-height:1.8;color:var(--text-secondary);">
+    <div class="card-body">
+
+<p>This policy explains how NyumbaManager uses cookies and similar tracking technologies.</p>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>What are cookies?</h3>
+<p>Cookies are small text files stored on your device by your browser. They enable the platform to remember your preferences and session state.</p>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>Cookies We Use</h3>
+<ul style='margin:8px 0 8px 20px;'>
+<li><strong>session (essential):</strong> Maintains your login session. Deleted when you close your browser or log out. Cannot be disabled without breaking authentication.</li>
+<li><strong>csrf_token (essential):</strong> Protects against Cross-Site Request Forgery attacks. Required for all forms.</li>
+<li><strong>nyumba_theme (functional):</strong> Remembers your light/dark theme preference. Stored in localStorage, not a cookie. Persists indefinitely.</li>
+<li><strong>sidebar_collapsed (functional):</strong> Remembers whether you've collapsed the sidebar. Stored in localStorage.</li>
+</ul>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>No Advertising or Analytics Cookies</h3>
+<p>We do not use Google Analytics, Facebook Pixel, or any advertising cookies. We do not share cookie data with advertisers.</p>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>Managing Cookies</h3>
+<p>You can clear cookies via your browser settings. Clearing essential cookies will log you out. You cannot opt out of essential cookies while using the platform.</p>
+
+      <div class="divider"></div>
+      <p class="text-muted text-sm">Questions? Contact us at <a href="mailto:legal@nyumbamanager.co.ke">legal@nyumbamanager.co.ke</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

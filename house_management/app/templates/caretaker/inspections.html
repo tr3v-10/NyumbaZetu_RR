@@ -1,0 +1,82 @@
+{% extends "shared/base.html" %}
+{% block title %}Inspections{% endblock %}
+{% block page_title %}Property Inspections{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div><h1 class="page-title">Inspections</h1></div>
+  <button class="btn btn-primary" onclick="Modal.open('newInspectionModal')"><i class="bi bi-plus-circle"></i> Log Inspection</button>
+</div>
+{% for ins in inspections %}
+<div class="card" style="margin-bottom:12px;">
+  <div class="d-flex justify-between align-center flex-wrap gap-3">
+    <div>
+      <div style="font-weight:600;">{{ ins.inspection_type.replace('_',' ')|title }} Inspection — {{ ins.property.name if ins.property else '—' }}</div>
+      <div class="text-xs text-muted">{{ ins.scheduled_date.strftime('%d %b %Y') }} · {{ ins.inspector.full_name if ins.inspector else '—' }}</div>
+    </div>
+    <div class="d-flex gap-2 align-center">
+      <span class="badge {% if ins.status=='completed' %}badge-success{% elif ins.status=='scheduled' %}badge-info{% else %}badge-warning{% endif %}">{{ ins.status }}</span>
+      {% if ins.general_condition == 'good' %}<span class="badge badge-success">Good</span>{% elif ins.general_condition == 'fair' %}<span class="badge badge-warning">Fair</span>{% elif ins.general_condition == 'poor' %}<span class="badge badge-danger">Poor</span>{% endif %}
+    </div>
+  </div>
+  {% if ins.notes %}<div class="text-sm text-muted" style="margin-top:8px;">{{ ins.notes }}</div>{% endif %}
+  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+    {% if ins.boiler_pressure_ok %}<span class="badge badge-success text-xs">⚡ Boiler OK</span>{% else %}<span class="badge badge-danger text-xs">⚡ Boiler Issue</span>{% endif %}
+    {% if ins.fire_extinguisher_ok %}<span class="badge badge-success text-xs">🔥 Extinguisher OK</span>{% else %}<span class="badge badge-danger text-xs">🔥 Extinguisher Issue</span>{% endif %}
+    {% if ins.security_lights_ok %}<span class="badge badge-success text-xs">💡 Lights OK</span>{% else %}<span class="badge badge-danger text-xs">💡 Lights Issue</span>{% endif %}
+    {% if ins.water_pressure_ok %}<span class="badge badge-success text-xs">💧 Water OK</span>{% else %}<span class="badge badge-danger text-xs">💧 Water Issue</span>{% endif %}
+    {% if ins.drainage_ok %}<span class="badge badge-success text-xs">🚰 Drainage OK</span>{% else %}<span class="badge badge-danger text-xs">🚰 Drainage Issue</span>{% endif %}
+  </div>
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">No inspections logged yet.</div></div>
+{% endfor %}
+
+<div class="modal-backdrop" id="newInspectionModal">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header"><span class="modal-title">Log Property Inspection</span><button class="modal-close" data-modal-close>×</button></div>
+    <form method="POST" action="{{ url_for('caretaker.inspections') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Property *</label>
+            <select class="form-control" name="property_id" required>
+              {% for p in assigned_properties %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Type</label>
+            <select class="form-control" name="inspection_type">
+              <option value="routine">Routine Monthly</option>
+              <option value="move_in">Move-In</option>
+              <option value="move_out">Move-Out</option>
+              <option value="maintenance">Post-Maintenance</option>
+              <option value="emergency">Emergency</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date *</label><input class="form-control" type="date" name="scheduled_date" required/></div>
+          <div class="form-group"><label class="form-label">Overall Condition</label>
+            <select class="form-control" name="general_condition">
+              <option value="good">Good</option><option value="fair">Fair</option><option value="poor">Poor</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div class="form-label" style="margin-bottom:10px;">Checklist</div>
+          <div class="d-grid" style="grid-template-columns:1fr 1fr;gap:8px;">
+            <label class="form-check"><input type="checkbox" name="boiler_pressure_ok"/> <span>Boiler pressure OK</span></label>
+            <label class="form-check"><input type="checkbox" name="fire_extinguisher_ok"/> <span>Fire extinguisher OK</span></label>
+            <label class="form-check"><input type="checkbox" name="common_area_clean"/> <span>Common areas clean</span></label>
+            <label class="form-check"><input type="checkbox" name="security_lights_ok"/> <span>Security lights OK</span></label>
+            <label class="form-check"><input type="checkbox" name="water_pressure_ok"/> <span>Water pressure OK</span></label>
+            <label class="form-check"><input type="checkbox" name="drainage_ok"/> <span>Drainage clear</span></label>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" name="notes" rows="2" placeholder="Any issues observed, actions taken, or follow-up required…"></textarea></div>
+        <input type="hidden" name="status" value="completed"/>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">Save Inspection</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

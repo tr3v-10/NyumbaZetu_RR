@@ -1,0 +1,60 @@
+{% extends "shared/base.html" %}
+{% block title %}Visitor Logs{% endblock %}
+{% block page_title %}Forensic Visitor Logs{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div>
+    <h1 class="page-title">Visitor Logs</h1>
+    <p class="page-subtitle">IP addresses, device fingerprints, geolocation & browser metadata for every request</p>
+  </div>
+</div>
+<div class="stat-grid" style="margin-bottom:20px;">
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-people" style="color:var(--accent);"></i></div><div class="stat-value">{{ unique_ips }}</div><div class="stat-label">Unique IPs</div></div>
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-globe" style="color:var(--info);"></i></div><div class="stat-value">{{ unique_countries }}</div><div class="stat-label">Countries</div></div>
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-robot" style="color:var(--warning);"></i></div><div class="stat-value">{{ bot_count }}</div><div class="stat-label">Bots Detected</div></div>
+  <div class="stat-card"><div class="stat-icon"><i class="bi bi-list-ul" style="color:var(--accent);"></i></div><div class="stat-value">{{ pagination.total }}</div><div class="stat-label">Total Entries</div></div>
+</div>
+<div class="card" style="margin-bottom:16px;">
+  <form method="GET" action="{{ url_for('super_admin.visitors') }}" class="d-flex gap-3 align-center flex-wrap" style="padding:0;">
+    <div class="search-box"><i class="bi bi-search search-icon"></i><input type="text" name="ip" value="{{ ip_filter }}" placeholder="Filter by IP…"/></div>
+    <div class="search-box"><i class="bi bi-globe search-icon"></i><input type="text" name="country" value="{{ country_filter }}" placeholder="Filter by country…"/></div>
+    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel"></i> Filter</button>
+    <a href="{{ url_for('super_admin.visitors') }}" class="btn btn-secondary btn-sm">Clear</a>
+  </form>
+</div>
+<div class="card">
+  <div class="table-wrapper">
+    <table>
+      <thead><tr><th>#</th><th>Time (EAT)</th><th>IP Address</th><th>User</th><th>Country/City</th><th>Device</th><th>Browser/OS</th><th>Path</th><th>Fingerprint</th><th></th></tr></thead>
+      <tbody>
+        {% for log in pagination.items %}
+        <tr>
+          <td class="text-muted text-xs">{{ log.id }}</td>
+          <td class="text-sm" style="white-space:nowrap;">{{ log.visited_at.strftime('%d/%m %H:%M:%S') }}</td>
+          <td><code style="font-size:0.8rem;color:var(--accent);">{{ log.ip_address }}</code>{% if log.is_suspicious %} <span class="badge badge-danger">⚠</span>{% endif %}</td>
+          <td>{% if log.user %}<a href="{{ url_for('super_admin.user_detail', user_id=log.user_id) }}" style="font-size:0.825rem;">{{ log.user.full_name }}</a><div class="text-xs text-muted">{{ log.user.role }}</div>{% else %}<span class="text-muted text-sm">Anon</span>{% endif %}</td>
+          <td class="text-sm">{{ log.country_code or '—' }}{% if log.city %}<div class="text-xs text-muted">{{ log.city }}</div>{% endif %}</td>
+          <td><span class="badge {% if log.device_type == 'mobile' %}badge-info{% elif log.device_type == 'bot' %}badge-warning{% else %}badge-neutral{% endif %}">{{ log.device_type or '—' }}</span>{% if log.device_brand %}<div class="text-xs text-muted">{{ log.device_brand }}</div>{% endif %}</td>
+          <td class="text-sm">{{ (log.browser or '—')[:18] }}<div class="text-xs text-muted">{{ (log.os or '—')[:18] }}</div></td>
+          <td><code style="font-size:0.72rem;color:var(--text-muted);">{{ (log.path or '')[:35] }}</code></td>
+          <td class="text-xs text-muted">{% if log.mac_address %}<i class="bi bi-hdd-network"></i> {{ log.mac_address }}<br/>{% endif %}{% if log.device_fingerprint %}<i class="bi bi-fingerprint"></i> {{ log.device_fingerprint[:10] }}…{% endif %}</td>
+          <td><a href="{{ url_for('super_admin.visitor_detail', log_id=log.id) }}" class="btn btn-sm btn-secondary"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10"><div class="empty-state" style="padding:30px;"><div class="empty-state-icon">📡</div><div class="empty-state-title">No visitor logs yet.</div></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagination.pages > 1 %}
+  <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);">
+    <span class="text-muted text-sm">Page {{ pagination.page }} of {{ pagination.pages }} · {{ pagination.total }} total</span>
+    <div class="pagination">
+      {% if pagination.has_prev %}<a href="{{ url_for('super_admin.visitors', page=pagination.prev_num, ip=ip_filter, country=country_filter) }}" class="page-link"><i class="bi bi-chevron-left"></i></a>{% endif %}
+      {% for p in pagination.iter_pages(left_edge=2,right_edge=2,left_current=2,right_current=2) %}{% if p %}<a href="{{ url_for('super_admin.visitors', page=p, ip=ip_filter, country=country_filter) }}" class="page-link {{ 'active' if p == pagination.page }}">{{ p }}</a>{% else %}<span class="page-link disabled">…</span>{% endif %}{% endfor %}
+      {% if pagination.has_next %}<a href="{{ url_for('super_admin.visitors', page=pagination.next_num, ip=ip_filter, country=country_filter) }}" class="page-link"><i class="bi bi-chevron-right"></i></a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

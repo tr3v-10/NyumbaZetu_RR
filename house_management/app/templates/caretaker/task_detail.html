@@ -1,0 +1,152 @@
+{% extends "shared/base.html" %}
+{% block title %}Work Order {{ task.ticket_number }}{% endblock %}
+{% block page_title %}Work Order{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div><h1 class="page-title">{{ task.title }}</h1><p class="page-subtitle">{{ task.ticket_number }} · Unit {{ task.unit.unit_number if task.unit else '—' }}, {{ task.unit.property.name if task.unit else '—' }}</p></div>
+  <a href="{{ url_for('caretaker.tasks') }}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+<div class="d-grid" style="grid-template-columns:2fr 1fr;gap:20px;">
+  <div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div class="card-title">Task Details</div>
+        <div class="d-flex gap-2">
+          <span class="badge {% if task.urgency=='emergency' %}badge-danger{% elif task.urgency=='urgent' %}badge-warning{% else %}badge-neutral{% endif %}">{{ task.urgency|upper }}</span>
+          <span class="badge {% if task.status in ['completed','closed'] %}badge-success{% elif task.status in ['in_progress','assigned'] %}badge-info{% else %}badge-warning{% endif %}">{{ task.status.replace('_',' ')|title }}</span>
+        </div>
+      </div>
+      <p style="color:var(--text-secondary);line-height:1.7;margin-bottom:12px;">{{ task.description }}</p>
+      <div class="d-flex gap-3 flex-wrap" style="font-size:0.825rem;color:var(--text-muted);">
+        <span><i class="bi bi-tag"></i> {{ task.category }}</span>
+        <span><i class="bi bi-person"></i> {{ task.tenant.full_name if task.tenant else '—' }}</span>
+        <span><i class="bi bi-telephone"></i> {{ task.tenant.phone if task.tenant else '—' }}</span>
+        <span><i class="bi bi-calendar"></i> {{ task.submitted_at.strftime('%d/%m/%Y %H:%M') }}</span>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><div class="card-title">Messages</div></div>
+      <div style="max-height:260px;overflow-y:auto;margin-bottom:12px;">
+        {% for msg in task.messages %}
+        <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+          <div class="d-flex align-center gap-2" style="margin-bottom:4px;">
+            <span style="font-weight:600;font-size:0.825rem;">{{ msg.sender.full_name }}</span>
+            <span class="badge badge-neutral" style="font-size:0.62rem;">{{ msg.sender.role }}</span>
+            <span class="text-xs text-muted" style="margin-left:auto;">{{ msg.created_at.strftime('%d/%m %H:%M') }}</span>
+          </div>
+          <p style="font-size:0.875rem;color:var(--text-secondary);">{{ msg.message }}</p>
+        </div>
+        {% else %}
+        <p class="text-muted text-sm">No messages yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Action forms -->
+    <div class="card">
+      <div class="tabs" id="actionTabs">
+        <button class="tab active" onclick="showAction('status',this)">Update Status</button>
+        <button class="tab" onclick="showAction('purchase',this)">Request Purchase</button>
+        {% if approved_purchase %}<button class="tab" onclick="showAction('receipt',this)">Upload Receipt</button>{% endif %}
+      </div>
+
+      <div id="action-status" style="padding-top:16px;">
+        <form method="POST" action="{{ url_for('caretaker.task_detail', task_id=task.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <input type="hidden" name="action" value="update_status"/>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">New Status</label>
+              <select class="form-control" name="status">
+                {% set valid_next = {'submitted':['acknowledged'],'acknowledged':['assigned','in_progress'],'assigned':['in_progress'],'in_progress':['awaiting_parts','awaiting_approval','completed'],'awaiting_parts':['in_progress'],'awaiting_approval':['in_progress']} %}
+                {% for s in valid_next.get(task.status, ['completed']) %}
+                <option value="{{ s }}">{{ s.replace('_',' ')|title }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" name="notes" rows="2" placeholder="What did you do? Current situation?"></textarea></div>
+          <button type="submit" class="btn btn-primary">Update Status</button>
+        </form>
+      </div>
+
+      <div id="action-purchase" style="display:none;padding-top:16px;">
+        <form method="POST" action="{{ url_for('caretaker.task_detail', task_id=task.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <input type="hidden" name="action" value="request_purchase"/>
+          <div class="form-group"><label class="form-label">Item Description *</label><input class="form-control" name="item_description" required placeholder="e.g. Kitchen mixer tap 3/4 inch"/></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Estimated Cost (KES) *</label><input class="form-control" type="number" name="estimated_cost" required data-kes/></div>
+            <div class="form-group"><label class="form-label">Vendor</label><input class="form-control" name="vendor_name" placeholder="Shop / supplier"/></div>
+          </div>
+          <button type="submit" class="btn btn-warning"><i class="bi bi-send"></i> Request Approval from Landlord</button>
+        </form>
+      </div>
+
+      {% if approved_purchase %}
+      <div id="action-receipt" style="display:none;padding-top:16px;">
+        <form method="POST" action="{{ url_for('caretaker.task_detail', task_id=task.id) }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <input type="hidden" name="action" value="upload_receipt"/>
+          <input type="hidden" name="purchase_request_id" value="{{ approved_purchase.id }}"/>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Actual Cost (KES) *</label><input class="form-control" type="number" name="actual_cost" value="{{ approved_purchase.estimated_cost }}" required data-kes/></div>
+            <div class="form-group"><label class="form-label">M-Pesa Receipt No.</label><input class="form-control" name="mpesa_receipt" placeholder="e.g. QHJ8UI23KL"/></div>
+          </div>
+          <div class="form-group"><label class="form-label">Upload Receipt *</label>
+            <div class="file-upload-area"><div class="file-upload-icon">🧾</div><div class="file-upload-text">Upload receipt photo</div><input type="file" name="receipt" accept="image/*" required style="display:none;"/></div>
+          </div>
+          <button type="submit" class="btn btn-success"><i class="bi bi-cloud-upload"></i> Submit Receipt & Close</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right: timeline + purchase requests -->
+  <div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><div class="card-title">Status Timeline</div></div>
+      <div class="timeline">
+        {% for h in task.status_history %}
+        <div class="timeline-item">
+          <div class="timeline-dot {{ 'active' if loop.last }}" style="font-size:0.5rem;">✓</div>
+          <div class="timeline-content">
+            <div class="timeline-title">{{ h.status.replace('_',' ')|title }}</div>
+            <div class="timeline-time">{{ h.changed_at.strftime('%d/%m %H:%M') }}{% if h.changed_by %} · {{ h.changed_by.first_name }}{% endif %}</div>
+            {% if h.notes %}<div class="timeline-body">{{ h.notes }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if task.purchase_requests %}
+    <div class="card">
+      <div class="card-header"><div class="card-title">Purchase Requests</div></div>
+      {% for pr in task.purchase_requests %}
+      <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+        <div class="d-flex justify-between align-center">
+          <span style="font-size:0.875rem;font-weight:500;">{{ pr.item_description[:35] }}{% if pr.item_description|length > 35 %}…{% endif %}</span>
+          <span class="badge {% if pr.status=='approved' %}badge-success{% elif pr.status=='rejected' %}badge-danger{% else %}badge-warning{% endif %}">{{ pr.status }}</span>
+        </div>
+        <div class="text-xs text-muted mt-1">Est: {{ pr.estimated_cost | kes }}{% if pr.actual_cost %} · Actual: {{ pr.actual_cost | kes }}{% endif %}</div>
+        {% if pr.landlord_notes %}<div class="text-xs" style="color:var(--accent);margin-top:2px;">"{{ pr.landlord_notes }}"</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function showAction(name, btn) {
+  document.querySelectorAll('[id^="action-"]').forEach(d=>d.style.display='none');
+  document.getElementById('action-'+name).style.display='';
+  document.querySelectorAll('#actionTabs .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+{% endblock %}

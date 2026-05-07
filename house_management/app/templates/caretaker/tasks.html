@@ -1,0 +1,33 @@
+{% extends "shared/base.html" %}
+{% block title %}Work Orders{% endblock %}
+{% block page_title %}Work Orders{% endblock %}
+{% block content %}
+<div class="page-header"><h1 class="page-title">Work Orders</h1></div>
+<div class="tabs">
+  {% for s in ['all','submitted','in_progress','awaiting_parts','awaiting_approval','completed'] %}
+  <a href="{{ url_for('caretaker.tasks', status=s) }}" class="tab {{ 'active' if status_filter==s or (s=='all' and not status_filter) }}">{{ s.replace('_',' ')|title }}</a>
+  {% endfor %}
+</div>
+{% for t in tasks %}
+<div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="location.href='{{ url_for('caretaker.task_detail', task_id=t.id) }}'">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;background:var(--bg-tertiary);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">
+        {% if t.category=='plumbing' %}🚿{% elif t.category=='electrical' %}⚡{% elif t.category=='security' %}🔐{% else %}🔧{% endif %}
+      </div>
+      <div>
+        <div style="font-weight:600;">{{ t.title }}</div>
+        <div class="text-xs text-muted">{{ t.ticket_number }} · {{ t.unit.unit_number if t.unit else '—' }}, {{ t.unit.property.name if t.unit else '—' }} · {{ t.submitted_at.strftime('%d/%m/%Y') }}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span class="badge {% if t.urgency=='emergency' %}badge-danger{% elif t.urgency=='urgent' %}badge-warning{% else %}badge-neutral{% endif %}">{{ t.urgency }}</span>
+      <span class="badge {% if t.status in ['completed','closed'] %}badge-success{% elif t.status in ['in_progress','assigned'] %}badge-info{% else %}badge-warning{% endif %}">{{ t.status.replace('_',' ') }}</span>
+      <i class="bi bi-chevron-right text-muted"></i>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-title">No work orders.</div></div>
+{% endfor %}
+{% endblock %}

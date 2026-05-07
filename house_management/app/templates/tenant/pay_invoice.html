@@ -1,0 +1,84 @@
+{% extends "shared/base.html" %}
+{% block title %}Pay Invoice{% endblock %}
+{% block page_title %}Pay Rent{% endblock %}
+{% block content %}
+<div style="max-width:540px;margin:0 auto;">
+  <div class="page-header"><h1 class="page-title">Pay Invoice</h1><p class="page-subtitle">{{ invoice.invoice_number }} · {{ invoice.billing_period_start.strftime('%B %Y') }}</p></div>
+  <div class="card" style="margin-bottom:20px;border-color:var(--accent-border);">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div><div class="text-muted text-sm">Amount Due</div><div style="font-size:2rem;font-weight:700;color:var(--accent);">{{ invoice.balance_due | kes }}</div></div>
+      <div style="text-align:right;"><div class="text-muted text-sm">Due Date</div><div class="font-bold">{{ invoice.due_date.strftime('%d %b %Y') }}</div>{% if invoice.is_overdue %}<div class="text-xs text-danger">{{ invoice.days_overdue }} days overdue</div>{% endif %}</div>
+    </div>
+  </div>
+  <div class="tabs" id="payTabs" style="margin-bottom:20px;">
+    <button class="tab active" onclick="switchTab('mpesa',this)"><i class="bi bi-phone"></i> M-Pesa</button>
+    <button class="tab" onclick="switchTab('bank',this)"><i class="bi bi-bank"></i> Bank Transfer</button>
+  </div>
+  <div id="tab-mpesa">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-phone" style="color:var(--accent);"></i> M-Pesa STK Push</div></div>
+      <p class="text-muted text-sm" style="margin-bottom:16px;">Enter your Safaricom number. You will receive a PIN prompt on your phone.</p>
+      <form id="mpesaForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="form-group">
+          <label class="form-label">M-Pesa Phone Number *</label>
+          <div class="input-group">
+            <span class="input-prefix">+254</span>
+            <input class="form-control" type="tel" name="phone" value="{{ current_user.phone|replace('+254','')|replace('254','') if current_user.phone else '' }}" placeholder="712 345 678" required/>
+          </div>
+          <div class="form-hint">Money goes directly to {{ invoice.unit.property.name }} Paybill {{ invoice.unit.property.mpesa_paybill or '—' }}</div>
+        </div>
+        <div id="mpesaStatus" style="display:none;" class="alert alert-info"><i class="bi bi-hourglass-split"></i> Waiting for M-Pesa… Status: <span id="statusText">Pending</span></div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="mpesaBtn"><i class="bi bi-phone"></i> Send M-Pesa Request</button>
+      </form>
+    </div>
+  </div>
+  <div id="tab-bank" style="display:none;">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-bank" style="color:var(--gold);"></i> Bank Transfer</div></div>
+      {% set prop = invoice.unit.property %}
+      {% if prop.bank_account_number %}
+      <table class="table-sm" style="margin-bottom:14px;">
+        <tr><th>Bank</th><td><strong>{{ prop.bank_name }}</strong></td></tr>
+        <tr><th>Account No.</th><td><code>{{ prop.bank_account_number }}</code></td></tr>
+        <tr><th>Branch</th><td>{{ prop.bank_branch }}</td></tr>
+        <tr><th style="color:var(--danger);">Reference *</th><td><code style="font-size:1rem;font-weight:700;color:var(--accent);">{{ invoice.payment_reference }}</code></td></tr>
+        <tr><th>Amount</th><td class="font-bold text-accent">{{ invoice.balance_due | kes }}</td></tr>
+      </table>
+      <div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i> <strong>Always use reference {{ invoice.payment_reference }}</strong> — this matches your invoice automatically.</div>
+      <button onclick="navigator.clipboard.writeText('{{ invoice.payment_reference }}').then(()=>Toast.success('Copied!','Reference copied'))" class="btn btn-outline btn-sm"><i class="bi bi-clipboard"></i> Copy Reference</button>
+      {% else %}
+      <div class="alert alert-info">Bank details not set up. Contact your landlord.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('[id^="tab-"]').forEach(t=>t.style.display='none');
+  document.getElementById('tab-'+name).style.display='';
+  document.querySelectorAll('#payTabs .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+document.getElementById('mpesaForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const btn = document.getElementById('mpesaBtn');
+  btn.disabled=true; btn.innerHTML='<span class="loading-spinner"></span> Sending…';
+  const body = new URLSearchParams(new FormData(this));
+  body.set('method','mpesa');
+  const res = await fetch('{{ url_for("tenant.pay_invoice", invoice_id=invoice.id) }}',
+    {method:'POST', body, headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+  const data = await res.json().catch(()=>null);
+  if (data && data.checkout_request_id) {
+    document.getElementById('mpesaStatus').style.display='';
+    pollPaymentStatus(data.checkout_request_id, document.getElementById('statusText'));
+    btn.innerHTML='<i class="bi bi-phone"></i> Awaiting PIN…';
+  } else {
+    btn.disabled=false; btn.innerHTML='<i class="bi bi-phone"></i> Send M-Pesa Request';
+    Toast.danger('Failed', data ? data.error : 'Could not initiate payment. Try again.');
+  }
+});
+</script>
+{% endblock %}

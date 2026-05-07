@@ -1,0 +1,66 @@
+{% extends "shared/base.html" %}
+{% block title %}Users{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div><h1 class="page-title">All Users</h1><p class="page-subtitle">{{ pagination.total }} registered accounts</p></div>
+  <a href="{{ url_for('super_admin.create_admin') }}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Promote to Admin</a>
+</div>
+<div class="card" style="margin-bottom:16px;">
+  <form method="GET" action="{{ url_for('super_admin.users') }}" class="d-flex gap-3 align-center flex-wrap" style="padding:0;">
+    <div class="search-box"><i class="bi bi-search search-icon"></i><input type="text" name="search" value="{{ search }}" placeholder="Search name/email…"/></div>
+    <select class="form-control" name="role" style="width:auto;padding:8px 32px 8px 12px;">
+      <option value="">All Roles</option>
+      {% for r in ['landlord','tenant','caretaker','agent','super_admin'] %}
+      <option value="{{ r }}" {{ 'selected' if role_filter==r }}>{{ r.replace('_',' ')|title }}</option>
+      {% endfor %}
+    </select>
+    <select class="form-control" name="status" style="width:auto;padding:8px 32px 8px 12px;">
+      <option value="">All Status</option>
+      <option value="active" {{ 'selected' if status_filter=='active' }}>Active</option>
+      <option value="inactive" {{ 'selected' if status_filter=='inactive' }}>Inactive</option>
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel"></i> Filter</button>
+    <a href="{{ url_for('super_admin.users') }}" class="btn btn-secondary btn-sm">Clear</a>
+  </form>
+</div>
+<div class="card">
+  <div class="table-wrapper"><table>
+    <thead><tr><th>#</th><th>Name</th><th>Email / Phone</th><th>Role</th><th>Joined</th><th>Last Login</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for u in pagination.items %}
+      <tr>
+        <td class="text-xs text-muted">{{ u.id }}</td>
+        <td><span style="font-weight:600;">{{ u.full_name }}</span></td>
+        <td><a href="mailto:{{ u.email }}" class="text-sm">{{ u.email }}</a>{% if u.phone %}<div class="text-xs text-muted">{{ u.phone }}</div>{% endif %}</td>
+        <td><span class="badge {% if u.role=='super_admin' %}badge-danger{% elif u.role=='landlord' %}badge-gold{% elif u.role=='tenant' %}badge-info{% elif u.role=='caretaker' %}badge-warning{% else %}badge-accent{% endif %}">{{ u.display_role }}</span></td>
+        <td class="text-sm text-muted">{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+        <td class="text-sm text-muted">{{ u.last_login_at.strftime('%d/%m %H:%M') if u.last_login_at else 'Never' }}</td>
+        <td>{% if u.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Inactive</span>{% endif %}</td>
+        <td class="d-flex gap-2">
+          <a href="{{ url_for('super_admin.user_detail', user_id=u.id) }}" class="btn btn-sm btn-secondary"><i class="bi bi-eye"></i></a>
+          <form method="POST" action="{{ url_for('super_admin.users') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="user_id" value="{{ u.id }}"/>
+            <input type="hidden" name="action" value="toggle_active"/>
+            <button type="submit" class="btn btn-sm {{ 'btn-warning' if u.is_active else 'btn-success' }}" title="{{ 'Deactivate' if u.is_active else 'Activate' }}"><i class="bi bi-{{ 'pause' if u.is_active else 'play' }}"></i></button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8"><div class="empty-state" style="padding:30px;"><div class="empty-state-icon">👤</div><div class="empty-state-title">No users found.</div></div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% if pagination.pages > 1 %}
+  <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);">
+    <span class="text-muted text-sm">Page {{ pagination.page }} of {{ pagination.pages }} · {{ pagination.total }} users</span>
+    <div class="pagination">
+      {% if pagination.has_prev %}<a href="{{ url_for('super_admin.users', page=pagination.prev_num, role=role_filter, status=status_filter, search=search) }}" class="page-link"><i class="bi bi-chevron-left"></i></a>{% endif %}
+      {% for p in pagination.iter_pages(left_edge=2,right_edge=2,left_current=2,right_current=2) %}{% if p %}<a href="{{ url_for('super_admin.users', page=p, role=role_filter, status=status_filter, search=search) }}" class="page-link {{ 'active' if p == pagination.page }}">{{ p }}</a>{% else %}<span class="page-link disabled">…</span>{% endif %}{% endfor %}
+      {% if pagination.has_next %}<a href="{{ url_for('super_admin.users', page=pagination.next_num, role=role_filter, status=status_filter, search=search) }}" class="page-link"><i class="bi bi-chevron-right"></i></a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

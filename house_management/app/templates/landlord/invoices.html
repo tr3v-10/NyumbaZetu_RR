@@ -1,0 +1,39 @@
+{% extends "shared/base.html" %}
+{% block title %}Invoices{% endblock %}
+{% block page_title %}Invoices{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div><h1 class="page-title">Invoices</h1><p class="page-subtitle">{{ pagination.total }} invoices</p></div>
+  <form method="POST" action="{{ url_for('landlord.generate_invoices') }}" style="display:inline;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <input type="hidden" name="month" value="{{ current_month }}"/>
+    <input type="hidden" name="year" value="{{ current_year }}"/>
+    <button type="submit" class="btn btn-gold"><i class="bi bi-lightning"></i> Generate Invoices</button>
+  </form>
+</div>
+<div class="tabs">
+  {% for s in ['all','sent','partial','overdue','paid','draft'] %}
+  <a href="{{ url_for('landlord.invoices', status=s) }}" class="tab {{ 'active' if status_filter==s or (s=='all' and not status_filter) }}">{{ s|title }}</a>
+  {% endfor %}
+</div>
+<div class="card"><div class="table-wrapper"><table>
+  <thead><tr><th>Invoice #</th><th>Tenant / Unit</th><th>Period</th><th>Total</th><th>Paid</th><th>Balance</th><th>Due</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    {% for inv in pagination.items %}
+    <tr>
+      <td><code style="font-size:0.78rem;">{{ inv.invoice_number }}</code></td>
+      <td><span style="font-weight:500;font-size:0.875rem;">{{ inv.tenant.full_name if inv.tenant else '—' }}</span><div class="text-xs text-muted">{{ inv.unit.unit_number if inv.unit else '—' }}</div></td>
+      <td class="text-sm text-muted">{{ inv.billing_period_start.strftime('%b %Y') }}</td>
+      <td class="font-bold">{{ inv.total_amount | kes }}</td>
+      <td class="text-success">{{ inv.paid_amount | kes }}</td>
+      <td class="{% if inv.balance_due > 0 %}text-danger font-bold{% else %}text-success{% endif %}">{{ inv.balance_due | kes }}</td>
+      <td class="text-sm">{{ inv.due_date.strftime('%d/%m/%Y') }}{% if inv.is_overdue %}<div class="text-xs text-danger">{{ inv.days_overdue }}d late</div>{% endif %}</td>
+      <td><span class="badge {% if inv.status=='paid' %}badge-success{% elif inv.status=='overdue' %}badge-danger{% elif inv.status=='partial' %}badge-warning{% elif inv.status=='sent' %}badge-info{% else %}badge-neutral{% endif %}">{{ inv.status }}</span></td>
+      <td><a href="{{ url_for('landlord.lease_detail', lease_id=inv.lease_id) }}" class="btn btn-sm btn-secondary"><i class="bi bi-eye"></i></a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9"><div class="empty-state" style="padding:30px;"><div class="empty-state-icon">🧾</div><div class="empty-state-title">No invoices. Click Generate above.</div></div></td></tr>
+    {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

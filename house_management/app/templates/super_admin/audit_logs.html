@@ -1,0 +1,36 @@
+{% extends "shared/base.html" %}
+{% block title %}Audit Trail{% endblock %}
+{% block page_title %}Audit Trail{% endblock %}
+{% block content %}
+<div class="page-header"><h1 class="page-title">Audit Trail</h1><p class="page-subtitle">All sensitive actions logged with user, IP, and timestamp</p></div>
+<div class="card">
+  <div class="table-wrapper"><table>
+    <thead><tr><th>#</th><th>Time</th><th>User</th><th>Action</th><th>Resource</th><th>IP</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for log in pagination.items %}
+      <tr>
+        <td class="text-xs text-muted">{{ log.id }}</td>
+        <td class="text-sm" style="white-space:nowrap;">{{ log.created_at.strftime('%d/%m %H:%M:%S') }}</td>
+        <td>{% if log.user %}<span style="font-size:0.825rem;font-weight:500;">{{ log.user.full_name }}</span><div class="text-xs text-muted">{{ log.user.role }}</div>{% else %}<span class="text-muted">System</span>{% endif %}</td>
+        <td><span class="badge badge-info">{{ log.action }}</span></td>
+        <td class="text-sm">{{ log.resource_type }}{% if log.resource_id %} #{{ log.resource_id }}{% endif %}{% if log.details %}<div class="text-xs text-muted">{{ log.details|truncate(60) }}</div>{% endif %}</td>
+        <td><code style="font-size:0.78rem;">{{ log.ip_address or '—' }}</code></td>
+        <td>{% if log.status == 'success' %}<span class="badge badge-success">OK</span>{% elif log.status == 'failure' %}<span class="badge badge-danger">Fail</span>{% else %}<span class="badge badge-neutral">{{ log.status }}</span>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7"><div class="empty-state" style="padding:30px;"><div class="empty-state-icon">📋</div><div class="empty-state-title">No audit logs yet.</div></div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% if pagination.pages > 1 %}
+  <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);">
+    <span class="text-muted text-sm">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    <div class="pagination">
+      {% if pagination.has_prev %}<a href="{{ url_for('super_admin.audit_logs', page=pagination.prev_num) }}" class="page-link"><i class="bi bi-chevron-left"></i></a>{% endif %}
+      {% for p in pagination.iter_pages(left_edge=2,right_edge=2,left_current=2,right_current=2) %}{% if p %}<a href="{{ url_for('super_admin.audit_logs', page=p) }}" class="page-link {{ 'active' if p == pagination.page }}">{{ p }}</a>{% else %}<span class="page-link disabled">…</span>{% endif %}{% endfor %}
+      {% if pagination.has_next %}<a href="{{ url_for('super_admin.audit_logs', page=pagination.next_num) }}" class="page-link"><i class="bi bi-chevron-right"></i></a>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

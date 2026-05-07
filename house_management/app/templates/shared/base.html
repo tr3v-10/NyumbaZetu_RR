@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="csrf-token" content="{{ csrf_token() }}"/>
+  <meta name="description" content="{{ app_name }} — Kenya's professional property management platform"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' wss:;"/>
+  <title>{% block title %}{{ app_name }}{% endblock %} — {{ app_name }}</title>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"/>
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <!-- App CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  {% block extra_css %}{% endblock %}
+  <script>
+    // Apply saved theme immediately to prevent flash
+    (function(){
+      var t=localStorage.getItem('nyumba_theme');
+      if(t==='light') document.documentElement.setAttribute('data-theme','light');
+    })();
+  </script>
+</head>
+<body>
+
+{% if current_user.is_authenticated %}
+<!-- ════ APP SHELL ════ -->
+<div class="app-wrapper">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🏠</div>
+      <div>
+        <div class="sidebar-brand-text">{{ app_name }}</div>
+        <div class="sidebar-brand-sub">Property Manager</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      {% if current_user.role == 'super_admin' %}
+        <div class="nav-section-label">Admin</div>
+        <a href="{{ url_for('super_admin.dashboard') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-speedometer2"></i></span> Dashboard
+        </a>
+        <a href="{{ url_for('super_admin.users') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-people"></i></span> Users
+        </a>
+        <a href="{{ url_for('super_admin.properties') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-buildings"></i></span> All Properties
+        </a>
+        <a href="{{ url_for('super_admin.financials') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-graph-up-arrow"></i></span> Financials
+        </a>
+        <div class="nav-section-label">Forensics</div>
+        <a href="{{ url_for('super_admin.visitors') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-eye"></i></span> Visitor Logs
+        </a>
+        <a href="{{ url_for('super_admin.audit_logs') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-journal-text"></i></span> Audit Trail
+        </a>
+        <a href="{{ url_for('super_admin.sms_logs') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-chat-square-text"></i></span> SMS Logs
+        </a>
+        <div class="nav-section-label">Broadcast</div>
+        <a href="{{ url_for('super_admin.announcements') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-megaphone"></i></span> Announcements
+        </a>
+        <a href="{{ url_for('super_admin.settings') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-gear"></i></span> Settings
+        </a>
+
+      {% elif current_user.role == 'landlord' %}
+        <div class="nav-section-label">Portfolio</div>
+        <a href="{{ url_for('landlord.dashboard') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-speedometer2"></i></span> Dashboard
+        </a>
+        <a href="{{ url_for('landlord.properties') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-buildings"></i></span> Properties
+        </a>
+        <div class="nav-section-label">Finance</div>
+        <a href="{{ url_for('landlord.invoices') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-receipt"></i></span> Invoices
+        </a>
+        <a href="{{ url_for('landlord.payments') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-cash-coin"></i></span> Payments
+        </a>
+        <a href="{{ url_for('landlord.expenses') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-wallet2"></i></span> Expenses
+        </a>
+        <a href="{{ url_for('landlord.reports') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-bar-chart-line"></i></span> Reports
+        </a>
+        <div class="nav-section-label">Tenants</div>
+        <a href="{{ url_for('landlord.leases') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-file-text"></i></span> Leases
+        </a>
+        <a href="{{ url_for('landlord.create_lease') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-plus-circle"></i></span> New Lease
+        </a>
+        <div class="nav-section-label">Operations</div>
+        <a href="{{ url_for('landlord.maintenance') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-tools"></i></span> Maintenance
+        </a>
+        <a href="{{ url_for('landlord.announcements') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-megaphone"></i></span> Announcements
+        </a>
+
+      {% elif current_user.role == 'tenant' %}
+        <div class="nav-section-label">My Home</div>
+        <a href="{{ url_for('tenant.dashboard') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-house-heart"></i></span> Dashboard
+        </a>
+        <a href="{{ url_for('tenant.invoices') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-receipt"></i></span> Invoices & Pay
+        </a>
+        <a href="{{ url_for('tenant.payments') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-clock-history"></i></span> Payment History
+        </a>
+        <a href="{{ url_for('tenant.auto_pay') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-arrow-repeat"></i></span> Auto-Pay
+        </a>
+        <div class="nav-section-label">Support</div>
+        <a href="{{ url_for('tenant.maintenance') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-tools"></i></span> Maintenance
+        </a>
+        <a href="{{ url_for('tenant.messages') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-chat-left-text"></i></span> Messages
+        </a>
+        <a href="{{ url_for('tenant.documents') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-folder2-open"></i></span> Documents
+        </a>
+        <a href="{{ url_for('tenant.notifications') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-bell"></i></span> Notifications
+          {% if unread_notifications > 0 %}<span class="nav-badge">{{ unread_notifications }}</span>{% endif %}
+        </a>
+
+      {% elif current_user.role == 'caretaker' %}
+        <div class="nav-section-label">Work</div>
+        <a href="{{ url_for('caretaker.dashboard') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-speedometer2"></i></span> Dashboard
+        </a>
+        <a href="{{ url_for('caretaker.tasks') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-tools"></i></span> Work Orders
+        </a>
+        <a href="{{ url_for('caretaker.inspections') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-clipboard-check"></i></span> Inspections
+        </a>
+
+      {% elif current_user.role == 'agent' %}
+        <div class="nav-section-label">Agency</div>
+        <a href="{{ url_for('agent.dashboard') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-speedometer2"></i></span> Dashboard
+        </a>
+        <a href="{{ url_for('agent.listings') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-buildings"></i></span> Listings
+        </a>
+        <a href="{{ url_for('agent.leases') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-file-text"></i></span> Leases
+        </a>
+        <a href="{{ url_for('agent.commissions') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-cash-coin"></i></span> Commissions
+        </a>
+        <a href="{{ url_for('agent.applicants') }}" class="nav-item">
+          <span class="nav-icon"><i class="bi bi-person-check"></i></span> Applicants
+        </a>
+      {% endif %}
+
+      <div class="nav-section-label">Account</div>
+      {% if current_user.role == 'tenant' %}
+      <a href="{{ url_for('tenant.profile') }}" class="nav-item">
+        <span class="nav-icon"><i class="bi bi-person"></i></span> Profile
+      </a>
+      {% endif %}
+      <a href="{{ url_for('auth.logout') }}" class="nav-item">
+        <span class="nav-icon"><i class="bi bi-box-arrow-right"></i></span> Sign Out
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="location.href='{% if current_user.role == "tenant" %}{{ url_for("tenant.profile") }}{% else %}#{% endif %}'">
+        <div class="sidebar-avatar">{{ current_user.first_name[0]|upper }}{{ current_user.last_name[0]|upper }}</div>
+        <div>
+          <div class="sidebar-user-name">{{ current_user.full_name }}</div>
+          <div class="sidebar-user-role">{{ current_user.display_role }}</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- SIDEBAR OVERLAY -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button class="topbar-menu-btn" onclick="Sidebar.toggle()" aria-label="Toggle menu">
+        <i class="bi bi-list"></i>
+      </button>
+      <span class="topbar-title">{% block page_title %}{% endblock %}</span>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <!-- Theme Toggle -->
+        <div class="theme-toggle" role="group" aria-label="Theme switcher">
+          <button class="theme-toggle-btn" data-theme="dark" title="Night mode">
+            🌙 Night
+          </button>
+          <button class="theme-toggle-btn" data-theme="light" title="Day mode">
+            ☀️ Day
+          </button>
+        </div>
+        <!-- Notifications -->
+        <button class="notif-btn" onclick="NotifPanel.toggle()" aria-label="Notifications">
+          <i class="bi bi-bell"></i>
+          {% if unread_notifications > 0 %}
+          <span class="notif-count">{{ unread_notifications }}</span>
+          {% endif %}
+        </button>
+      </div>
+    </header>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div style="padding: 12px 28px 0;">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ 'danger' if category == 'error' else category }}">
+        <span class="alert-icon">
+          {% if category == 'success' %}<i class="bi bi-check-circle-fill"></i>
+          {% elif category in ('danger','error') %}<i class="bi bi-exclamation-triangle-fill"></i>
+          {% elif category == 'warning' %}<i class="bi bi-exclamation-circle-fill"></i>
+          {% else %}<i class="bi bi-info-circle-fill"></i>{% endif %}
+        </span>
+        <span>{{ message }}</span>
+        <button class="alert-dismiss" type="button" aria-label="Dismiss">×</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- PAGE CONTENT -->
+    <main class="page-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div><!-- /main-content -->
+
+</div><!-- /app-wrapper -->
+
+<!-- NOTIFICATION PANEL -->
+<aside class="notif-panel" id="notifPanel">
+  <div class="notif-panel-header">
+    <span class="notif-panel-title">Notifications</span>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-secondary" onclick="fetch('/api/notifications/read-all',{method:'POST'}).then(()=>location.reload())" title="Mark all read">
+        <i class="bi bi-check-all"></i>
+      </button>
+      <button class="btn btn-sm btn-secondary" onclick="NotifPanel.toggle()">×</button>
+    </div>
+  </div>
+  <div class="notif-list">
+    <div class="empty-state" style="padding:30px;">
+      <div class="empty-state-icon">🔔</div>
+      <div class="empty-state-title">Loading…</div>
+    </div>
+  </div>
+</aside>
+
+{% else %}
+<!-- NON-AUTHENTICATED PAGES -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div style="position:fixed;top:12px;right:12px;z-index:9999;max-width:380px;">
+  {% for category, message in messages %}
+  <div class="alert alert-{{ 'danger' if category == 'error' else category }}">
+    <span>{{ message }}</span>
+    <button class="alert-dismiss" type="button">×</button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- Theme toggle for auth pages -->
+<div style="position:fixed;top:16px;right:16px;z-index:999;">
+  <div class="theme-toggle">
+    <button class="theme-toggle-btn" data-theme="dark">🌙 Night</button>
+    <button class="theme-toggle-btn" data-theme="light">☀️ Day</button>
+  </div>
+</div>
+
+{% block content %}{% endblock %}
+{% endif %}
+
+<!-- Toast container -->
+<div class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+
+<!-- Policy footer links (always visible) -->
+<div style="text-align:center;padding:16px;font-size:0.72rem;color:var(--text-muted);border-top:1px solid var(--border);margin-top:auto;">
+  <a href="{{ url_for('policies.privacy') }}" style="color:var(--text-muted);margin:0 8px;">Privacy Policy</a>|
+  <a href="{{ url_for('policies.terms') }}" style="color:var(--text-muted);margin:0 8px;">Terms of Service</a>|
+  <a href="{{ url_for('policies.usage') }}" style="color:var(--text-muted);margin:0 8px;">Usage Policy</a>|
+  <a href="{{ url_for('policies.data_protection') }}" style="color:var(--text-muted);margin:0 8px;">Data Protection</a>|
+  <a href="{{ url_for('policies.cookie_policy') }}" style="color:var(--text-muted);margin:0 8px;">Cookie Policy</a>
+  <br/><span style="margin-top:6px;display:block;">© {{ 2024 }} {{ app_name }}. Built for Kenya. All Rights Reserved.</span>
+</div>
+</body>
+</html>

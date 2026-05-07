@@ -1,0 +1,236 @@
+{% extends "shared/base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}System Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-row">
+    <div>
+      <h1 class="page-title">System Overview</h1>
+      <p class="page-subtitle">Real-time platform statistics and forensics — {{ stats.visitors.last_7_days }} unique visits (last 7 days)</p>
+    </div>
+    <div class="d-flex gap-3">
+      <a href="{{ url_for('super_admin.visitors') }}" class="btn btn-outline"><i class="bi bi-eye"></i> Visitor Logs</a>
+      <a href="{{ url_for('super_admin.audit_logs') }}" class="btn btn-secondary"><i class="bi bi-journal-text"></i> Audit Trail</a>
+    </div>
+  </div>
+</div>
+
+<!-- STAT GRID -->
+<div class="stat-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-people" style="color:var(--accent);"></i></div>
+    <div class="stat-value">{{ stats.users.total }}</div>
+    <div class="stat-label">Total Users</div>
+    <div class="stat-change up"><i class="bi bi-arrow-up-short"></i> {{ stats.users.active }} active</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-buildings" style="color:var(--accent);"></i></div>
+    <div class="stat-value">{{ stats.properties.total }}</div>
+    <div class="stat-label">Properties</div>
+    <div class="stat-change"><span style="color:var(--text-muted);">{{ stats.properties.total_units }} units total</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-house-check" style="color:var(--success);"></i></div>
+    <div class="stat-value">{{ stats.properties.occupancy_rate }}%</div>
+    <div class="stat-label">Occupancy Rate</div>
+    <div class="stat-change"><span style="color:var(--text-muted);">{{ stats.properties.occupied }}/{{ stats.properties.total_units }} occupied</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-cash-coin" style="color:var(--gold);"></i></div>
+    <div class="stat-value" style="font-size:1.3rem;">{{ stats.revenue.this_month | kes }}</div>
+    <div class="stat-label">Revenue This Month</div>
+    <div class="stat-change up">Via M-Pesa &amp; Bank</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-eye" style="color:var(--info);"></i></div>
+    <div class="stat-value">{{ stats.visitors.last_7_days }}</div>
+    <div class="stat-label">Visits (7 Days)</div>
+    <div class="stat-change"><span style="color:var(--text-muted);">{{ stats.visitors.by_country|length }} countries</span></div>
+  </div>
+  {% for role, count in stats.users.by_role.items() %}
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-person-badge" style="color:var(--accent);"></i></div>
+    <div class="stat-value">{{ count }}</div>
+    <div class="stat-label">{{ role.replace('_',' ')|title }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="d-grid" style="grid-template-columns:2fr 1fr;gap:20px;margin-bottom:24px;">
+  <!-- Visitor Chart -->
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Visitor Traffic (30 Days)</div><div class="card-subtitle">Daily unique visits to the platform</div></div>
+    </div>
+    <div class="chart-container" style="height:240px;"><canvas id="visitorChart"></canvas></div>
+  </div>
+  <!-- Users by Role Pie -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Users by Role</div></div>
+    <div class="chart-container" style="height:240px;"><canvas id="roleChart"></canvas></div>
+  </div>
+</div>
+
+<div class="d-grid" style="grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+  <!-- Top Countries -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Visitor Geolocation</div>
+      <a href="{{ url_for('super_admin.visitors') }}" class="btn btn-sm btn-secondary">View All</a>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>#</th><th>Country</th><th>Visits</th></tr></thead>
+        <tbody>
+          {% for item in stats.visitors.by_country[:8] %}
+          <tr>
+            <td class="text-muted">{{ loop.index }}</td>
+            <td>{{ item.country or 'Unknown' }}</td>
+            <td><span class="badge badge-info">{{ item.count }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-center text-muted" style="padding:20px;">No data yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Top IPs -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Top IP Addresses</div>
+      <a href="{{ url_for('super_admin.visitors') }}" class="btn btn-sm btn-secondary">Full Logs</a>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>IP Address</th><th>Hits</th><th></th></tr></thead>
+        <tbody>
+          {% for item in stats.visitors.top_ips[:8] %}
+          <tr>
+            <td><code style="font-size:0.8rem;">{{ item.ip }}</code></td>
+            <td>{{ item.count }}</td>
+            <td><a href="{{ url_for('super_admin.visitors') }}?ip={{ item.ip }}" class="btn btn-sm btn-secondary"><i class="bi bi-search"></i></a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="text-center text-muted" style="padding:20px;">No data</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="d-grid" style="grid-template-columns:1fr 1fr;gap:20px;">
+  <!-- Recent Users -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Recent Registrations</div>
+      <a href="{{ url_for('super_admin.users') }}" class="btn btn-sm btn-secondary">All Users</a>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Name</th><th>Role</th><th>Joined</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for u in recent_users %}
+          <tr>
+            <td>
+              <a href="{{ url_for('super_admin.user_detail', user_id=u.id) }}" style="color:var(--text-primary);font-weight:500;">{{ u.full_name }}</a>
+              <div class="text-xs text-muted">{{ u.email }}</div>
+            </td>
+            <td><span class="badge badge-neutral">{{ u.display_role }}</span></td>
+            <td class="text-muted text-sm">{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+            <td>
+              {% if u.is_active %}<span class="badge badge-success">Active</span>
+              {% else %}<span class="badge badge-danger">Inactive</span>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-muted" style="padding:20px;">No users yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Recent Payments -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Recent Payments</div>
+      <a href="{{ url_for('super_admin.financials') }}" class="btn btn-sm btn-secondary">Financials</a>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Tenant</th><th>Amount</th><th>Method</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for p in recent_payments %}
+          <tr>
+            <td>{{ p.tenant.full_name if p.tenant else '—' }}</td>
+            <td class="text-accent font-bold">{{ p.amount | kes }}</td>
+            <td><span class="badge badge-info">{{ p.payment_method | upper }}</span></td>
+            <td class="text-muted text-sm">{{ p.payment_date.strftime('%d/%m %H:%M') }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-muted" style="padding:20px;">No payments yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const isDark = ThemeManager.get() !== 'light';
+  const C = getChartColors(isDark);
+
+  // Visitor traffic chart
+  const vDays = {{ stats.visitors.daily_30 | tojson }};
+  new Chart(document.getElementById('visitorChart'), {
+    type: 'line',
+    data: {
+      labels: vDays.map(d => d.date.slice(5)),
+      datasets: [{
+        label: 'Daily Visits',
+        data: vDays.map(d => d.visits),
+        fill: true,
+        backgroundColor: C.accentAlpha,
+        borderColor: C.accent,
+        borderWidth: 2,
+        tension: 0.4,
+        pointRadius: 3,
+        pointBackgroundColor: C.accent,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: C.grid } },
+        x: { grid: { color: C.grid } }
+      }
+    }
+  });
+
+  // Role pie chart
+  const roleData = {{ stats.users.by_role | tojson }};
+  new Chart(document.getElementById('roleChart'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(roleData).map(r => r.replace('_', ' ').toUpperCase()),
+      datasets: [{
+        data: Object.values(roleData),
+        backgroundColor: [C.accent, C.gold, C.info, C.success, C.danger],
+        borderWidth: 2,
+        borderColor: isDark ? '#111911' : '#ffffff',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+});
+</script>
+{% endblock %}

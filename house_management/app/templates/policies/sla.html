@@ -1,0 +1,35 @@
+{% extends "shared/base.html" %}
+{% block title %}Service Level Agreement{% endblock %}
+{% block page_title %}Service Level Agreement{% endblock %}
+{% block content %}
+<div style="max-width:860px;margin:0 auto;">
+  <div class="page-header">
+    <h1 class="page-title">Service Level Agreement</h1>
+    <p class="page-subtitle">Last updated: 1 January 2025 · Effective for all NyumbaManager users</p>
+  </div>
+  <div class="card" style="line-height:1.8;color:var(--text-secondary);">
+    <div class="card-body">
+
+<p>This SLA defines the service standards NyumbaManager commits to for all paid subscription plans.</p>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>Uptime</h3>
+<p>We target 99.5% monthly uptime, excluding scheduled maintenance windows (announced at least 24 hours in advance). This equates to no more than 3.65 hours downtime per month.</p>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>Response Times</h3>
+<ul style='margin:8px 0 8px 20px;'>
+<li>Critical (platform down, payment failures): 1 hour response, 4 hours resolution</li>
+<li>High (major feature unavailable): 4 hours response, 24 hours resolution</li>
+<li>Medium (minor feature issue): 1 business day response, 3 business days resolution</li>
+<li>Low (cosmetic / enhancement): 5 business days response</li>
+</ul>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>M-Pesa Callbacks</h3>
+<p>STK Push callbacks from Safaricom are processed within 30 seconds of receipt. Automatic receipt generation occurs within 60 seconds of a confirmed M-Pesa payment.</p>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>Support Channels</h3>
+<p>Email: support@nyumbamanager.co.ke · Phone: +254 700 000 000 (Mon–Fri 8am–6pm EAT) · Emergency: +254 700 000 001 (24/7 for critical issues)</p>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>Credits</h3>
+<p>Failure to meet uptime targets entitles customers to service credits: 10% of monthly fee for each 0.5% below the 99.5% target.</p>
+
+      <div class="divider"></div>
+      <p class="text-muted text-sm">Questions? Contact us at <a href="mailto:legal@nyumbamanager.co.ke">legal@nyumbamanager.co.ke</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

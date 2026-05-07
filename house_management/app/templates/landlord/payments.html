@@ -1,0 +1,64 @@
+{% extends "shared/base.html" %}
+{% block title %}Payments{% endblock %}
+{% block page_title %}Payments{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div><h1 class="page-title">Payments</h1><p class="page-subtitle">{{ pagination.total }} records</p></div>
+  <button class="btn btn-primary" onclick="Modal.open('recordPaymentModal')"><i class="bi bi-plus-circle"></i> Record Cash/Cheque</button>
+</div>
+<div class="tabs">
+  {% for m in ['all','mpesa','equity_bank','kcb_bank','coop_bank','cash','cheque'] %}
+  <a href="{{ url_for('landlord.payments', method=m) }}" class="tab {{ 'active' if method_filter==m or (m=='all' and not method_filter) }}">{{ m.replace('_',' ')|title }}</a>
+  {% endfor %}
+</div>
+<div class="card"><div class="table-wrapper"><table>
+  <thead><tr><th>Date</th><th>Tenant</th><th>Unit</th><th>Amount</th><th>Method</th><th>Reference</th><th>Reconciled</th></tr></thead>
+  <tbody>
+    {% for p in pagination.items %}
+    <tr>
+      <td class="text-sm">{{ p.payment_date.strftime('%d/%m/%Y %H:%M') }}</td>
+      <td>{{ p.tenant.full_name if p.tenant else '—' }}</td>
+      <td class="text-sm">{{ p.unit.unit_number if p.unit else '—' }}</td>
+      <td class="font-bold text-accent">{{ p.amount | kes }}</td>
+      <td>
+        {% if p.payment_method == 'mpesa' %}<span class="badge badge-success">M-Pesa</span>
+        {% elif 'bank' in p.payment_method %}<span class="badge badge-info">{{ p.payment_method.replace('_',' ')|title }}</span>
+        {% else %}<span class="badge badge-neutral">{{ p.payment_method|title }}</span>{% endif %}
+      </td>
+      <td><code style="font-size:0.78rem;">{{ p.mpesa_receipt_number or p.bank_reference or '—' }}</code></td>
+      <td>
+        {% if p.reconciliation_status == 'matched' %}<span class="badge badge-success">Matched</span>
+        {% elif p.reconciliation_status == 'unmatched' %}<span class="badge badge-danger">Unmatched</span>
+        {% else %}<span class="badge badge-warning">{{ p.reconciliation_status }}</span>{% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7"><div class="empty-state" style="padding:30px;"><div class="empty-state-icon">💸</div><div class="empty-state-title">No payments yet.</div></div></td></tr>
+    {% endfor %}
+  </tbody>
+</table></div></div>
+<div class="modal-backdrop" id="recordPaymentModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Record Manual Payment</span><button class="modal-close" data-modal-close>×</button></div>
+    <form method="POST" action="{{ url_for('landlord.record_payment') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Invoice # *</label>
+          <input class="form-control" name="invoice_id" required placeholder="Enter invoice number or ID"/>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Amount (KES) *</label><input class="form-control" type="number" name="amount" required data-kes/></div>
+          <div class="form-group"><label class="form-label">Method *</label>
+            <select class="form-control" name="payment_method">
+              <option value="cash">Cash</option><option value="cheque">Cheque</option>
+              <option value="mpesa">M-Pesa (manual)</option><option value="rtgs">RTGS</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><input class="form-control" name="notes" placeholder="e.g. Cash paid at caretaker office"/></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">Record Payment</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

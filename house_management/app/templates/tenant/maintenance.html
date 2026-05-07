@@ -1,0 +1,62 @@
+{% extends "shared/base.html" %}
+{% block title %}Maintenance{% endblock %}
+{% block page_title %}Maintenance Requests{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div><h1 class="page-title">Maintenance</h1><p class="page-subtitle">{{ requests|length }} requests</p></div>
+  <button class="btn btn-primary" onclick="Modal.open('newRequestModal')"><i class="bi bi-plus-circle"></i> Submit Request</button>
+</div>
+{% for req in requests %}
+<div class="card" style="margin-bottom:12px;cursor:pointer;" onclick="location.href='{{ url_for('tenant.maintenance_detail', request_id=req.id) }}'">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:42px;height:42px;background:var(--bg-tertiary);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">
+        {% if req.category=='plumbing' %}🚿{% elif req.category=='electrical' %}⚡{% elif req.category=='pest_control' %}🐛{% elif req.category=='security' %}🔐{% elif req.category=='carpentry' %}🪚{% else %}🔧{% endif %}
+      </div>
+      <div>
+        <div style="font-weight:600;">{{ req.title }}</div>
+        <div class="text-xs text-muted">{{ req.ticket_number }} · {{ req.submitted_at.strftime('%d %b %Y') }}</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="badge {% if req.urgency=='emergency' %}badge-danger{% elif req.urgency=='urgent' %}badge-warning{% else %}badge-neutral{% endif %}">{{ req.urgency }}</span>
+      <span class="badge {% if req.status in ['completed','closed'] %}badge-success{% elif req.status in ['in_progress','assigned'] %}badge-info{% elif req.status=='submitted' %}badge-warning{% else %}badge-neutral{% endif %}">{{ req.status.replace('_',' ') }}</span>
+      {% if req.tenant_rating %}<span class="text-gold" title="{{ req.tenant_rating }}/5">{{ '★'*req.tenant_rating }}{{ '☆'*(5-req.tenant_rating) }}</span>{% endif %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-state-icon">🔧</div><div class="empty-state-title">No requests yet.</div><div class="empty-state-text">Submit a request if something needs fixing in your unit.</div><button class="btn btn-primary" onclick="Modal.open('newRequestModal')">Submit Request</button></div>
+{% endfor %}
+<div class="modal-backdrop" id="newRequestModal">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">New Maintenance Request</span><button class="modal-close" data-modal-close>×</button></div>
+    <form method="POST" action="{{ url_for('tenant.maintenance') }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Issue Title *</label><input class="form-control" name="title" required placeholder="e.g. Kitchen sink tap leaking"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Category</label>
+            <select class="form-control" name="category">
+              <option value="plumbing">🚿 Plumbing</option><option value="electrical">⚡ Electrical</option>
+              <option value="carpentry">🪚 Carpentry</option><option value="pest_control">🐛 Pest Control</option>
+              <option value="cleaning">🧹 Cleaning</option><option value="security">🔐 Security</option>
+              <option value="appliance">📦 Appliance</option><option value="other">🔧 Other</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Urgency</label>
+            <select class="form-control" name="urgency">
+              <option value="routine">Routine</option><option value="urgent">Urgent</option><option value="emergency">🚨 Emergency</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Description *</label><textarea class="form-control" name="description" required rows="3" placeholder="Describe the issue in detail…"></textarea></div>
+        <div class="form-group"><label class="form-label">Photo (optional)</label>
+          <div class="file-upload-area"><div class="file-upload-icon">📷</div><div class="file-upload-text">Click to upload photo</div><div class="file-upload-hint">JPG, PNG, MP4 · Max 20MB</div><input type="file" name="photo" accept="image/*,video/*" style="display:none;"/></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">Submit Request</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

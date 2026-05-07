@@ -1,0 +1,37 @@
+{% extends "shared/base.html" %}
+{% block title %}Software Usage Policy{% endblock %}
+{% block page_title %}Software Usage Policy{% endblock %}
+{% block content %}
+<div style="max-width:860px;margin:0 auto;">
+  <div class="page-header">
+    <h1 class="page-title">Software Usage Policy</h1>
+    <p class="page-subtitle">Last updated: 1 January 2025 · Effective for all NyumbaManager users</p>
+  </div>
+  <div class="card" style="line-height:1.8;color:var(--text-secondary);">
+    <div class="card-body">
+
+<p>This policy governs acceptable use of NyumbaManager software and APIs.</p>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>Permitted Use</h3>
+<p>You may use NyumbaManager solely for legitimate property management purposes: managing your own properties, paying rent for your tenancy, or performing caretaker/agent duties for properties you are assigned to.</p>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>Prohibited Activities</h3>
+<ul style='margin:8px 0 8px 20px;'>
+<li>Attempting to access other users' data without authorisation</li>
+<li>Automated scraping, crawling, or bulk data extraction</li>
+<li>Reverse engineering or decompiling the software</li>
+<li>Using the platform to facilitate money laundering or fraud</li>
+<li>Creating multiple accounts to circumvent rate limits or restrictions</li>
+<li>Uploading malware, ransomware, or harmful files</li>
+<li>Impersonating landlords, tenants, or NyumbaManager staff</li>
+<li>Using the API without authorised credentials</li>
+</ul>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>Rate Limits</h3>
+<p>API endpoints are rate-limited to 200 requests/hour for standard users. M-Pesa STK Push endpoints are limited to 10 requests/minute. Exceeding these limits will result in temporary blocks.</p>
+<h3 style='font-family:var(--font-head);margin:18px 0 8px;'>Consequences of Violation</h3>
+<p>Violations may result in immediate account suspension, permanent ban, reporting to relevant authorities, and civil or criminal liability under Kenyan law including the Computer Misuse and Cybercrimes Act, 2018.</p>
+
+      <div class="divider"></div>
+      <p class="text-muted text-sm">Questions? Contact us at <a href="mailto:legal@nyumbamanager.co.ke">legal@nyumbamanager.co.ke</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

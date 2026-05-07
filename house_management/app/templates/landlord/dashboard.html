@@ -1,0 +1,205 @@
+{% extends "shared/base.html" %}
+{% block title %}Landlord Dashboard{% endblock %}
+{% block page_title %}Portfolio Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-row">
+    <div>
+      <h1 class="page-title">Good day, {{ current_user.first_name }} 👋</h1>
+      <p class="page-subtitle">{{ stats.summary.total_properties }} properties · {{ stats.summary.total_units }} units · {{ stats.summary.occupancy_rate }}% occupied</p>
+    </div>
+    <div class="d-flex gap-3 flex-wrap">
+      <a href="{{ url_for('landlord.create_lease') }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> New Lease</a>
+      <form method="POST" action="{{ url_for('landlord.generate_invoices') }}" style="display:inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="month" value="{{ month }}"/>
+        <input type="hidden" name="year" value="{{ year }}"/>
+        <button type="submit" class="btn btn-gold"><i class="bi bi-receipt"></i> Generate Invoices</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- KEY STATS -->
+<div class="stat-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-cash-coin" style="color:var(--accent);"></i></div>
+    <div class="stat-value" style="font-size:1.4rem;">{{ stats.summary.monthly_revenue | kes }}</div>
+    <div class="stat-label">Revenue This Month</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-exclamation-circle" style="color:var(--danger);"></i></div>
+    <div class="stat-value" style="font-size:1.4rem;">{{ stats.summary.outstanding_rent | kes }}</div>
+    <div class="stat-label">Outstanding Rent</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-graph-down" style="color:var(--warning);"></i></div>
+    <div class="stat-value" style="font-size:1.4rem;">{{ stats.summary.monthly_expenses | kes }}</div>
+    <div class="stat-label">Expenses This Month</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-bank" style="color:var(--success);"></i></div>
+    <div class="stat-value" style="font-size:1.4rem;">{{ stats.summary.net_income | kes }}</div>
+    <div class="stat-label">Net Income</div>
+    <div class="stat-change {{ 'up' if stats.summary.net_income >= 0 else 'down' }}">
+      <i class="bi bi-arrow-{{ 'up' if stats.summary.net_income >= 0 else 'down' }}-short"></i>
+      Revenue minus expenses
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-house-check" style="color:var(--info);"></i></div>
+    <div class="stat-value">{{ stats.summary.occupancy_rate }}%</div>
+    <div class="stat-label">Occupancy Rate</div>
+    <div style="margin-top:8px;">
+      <div class="progress"><div class="progress-bar" style="width:{{ stats.summary.occupancy_rate }}%"></div></div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-door-open" style="color:var(--warning);"></i></div>
+    <div class="stat-value">{{ stats.summary.vacant_units }}</div>
+    <div class="stat-label">Vacant Units</div>
+    <div class="stat-change down"><i class="bi bi-arrow-down-short"></i> {{ stats.summary.occupied_units }} occupied</div>
+  </div>
+</div>
+
+<div class="d-grid" style="grid-template-columns:2fr 1fr;gap:20px;margin-bottom:24px;">
+  <!-- Revenue Chart -->
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Revenue vs Expenses — {{ year }}</div><div class="card-subtitle">Monthly breakdown (KSh)</div></div>
+      <div class="d-flex gap-2">
+        {% for y in [year-1, year, year+1] %}
+        <a href="{{ url_for('landlord.dashboard') }}?year={{ y }}&month={{ month }}" class="btn btn-sm {{ 'btn-primary' if y == year else 'btn-secondary' }}">{{ y }}</a>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="chart-container" style="height:260px;"><canvas id="revenueChart"></canvas></div>
+  </div>
+  <!-- Payment Methods -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Payment Channels</div><div class="card-subtitle">{{ year }}</div></div>
+    <div class="chart-container" style="height:260px;"><canvas id="methodChart"></canvas></div>
+  </div>
+</div>
+
+<div class="d-grid" style="grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:24px;">
+  <!-- Recent Payments -->
+  <div class="card" style="grid-column:span 2;">
+    <div class="card-header">
+      <div class="card-title">Recent Payments</div>
+      <a href="{{ url_for('landlord.payments') }}" class="btn btn-sm btn-secondary">View All</a>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Tenant</th><th>Unit</th><th>Amount</th><th>Method</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for p in recent_payments %}
+          <tr>
+            <td>{{ p.tenant.full_name if p.tenant else '—' }}</td>
+            <td>{{ p.unit.unit_number if p.unit else '—' }}</td>
+            <td class="text-accent font-bold">{{ p.amount | kes }}</td>
+            <td>
+              {% if p.payment_method == 'mpesa' %}
+              <span class="badge badge-success">M-Pesa</span>
+              {% else %}
+              <span class="badge badge-info">{{ p.payment_method|upper }}</span>
+              {% endif %}
+            </td>
+            <td class="text-muted text-sm">{{ p.payment_date.strftime('%d/%m %H:%M') }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5"><div class="empty-state" style="padding:20px;"><div class="empty-state-text">No payments yet this period.</div></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pending Maintenance -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Maintenance Queue</div>
+      <a href="{{ url_for('landlord.maintenance') }}" class="btn btn-sm btn-secondary">All</a>
+    </div>
+    {% for mr in pending_maintenance %}
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div class="d-flex align-center justify-between">
+        <span style="font-size:0.825rem;font-weight:600;color:var(--text-primary);">{{ mr.title[:35] }}{% if mr.title|length > 35 %}…{% endif %}</span>
+        <span class="badge {% if mr.urgency == 'emergency' %}badge-danger{% elif mr.urgency == 'urgent' %}badge-warning{% else %}badge-neutral{% endif %}">{{ mr.urgency }}</span>
+      </div>
+      <div class="text-xs text-muted mt-1">{{ mr.ticket_number }} · {{ mr.unit.unit_number if mr.unit else '—' }}</div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:24px;"><div class="empty-state-icon" style="font-size:1.5rem;">✅</div><div class="empty-state-text">No open requests</div></div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Overdue Invoices -->
+{% if overdue_invoices %}
+<div class="card" style="border-color:var(--danger);border-left:3px solid var(--danger);">
+  <div class="card-header">
+    <div><div class="card-title" style="color:var(--danger);">⚠ Overdue Invoices</div><div class="card-subtitle">These tenants have outstanding rent</div></div>
+    <a href="{{ url_for('landlord.invoices') }}?status=overdue" class="btn btn-sm btn-danger">View All Overdue</a>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead><tr><th>Invoice</th><th>Tenant</th><th>Unit</th><th>Amount Due</th><th>Days Overdue</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for inv in overdue_invoices %}
+        <tr>
+          <td><code style="font-size:0.8rem;">{{ inv.invoice_number }}</code></td>
+          <td>{{ inv.tenant.full_name if inv.tenant else '—' }}</td>
+          <td>{{ inv.unit.unit_number if inv.unit else '—' }}</td>
+          <td class="text-danger font-bold">{{ inv.balance_due | kes }}</td>
+          <td><span class="badge badge-danger">{{ inv.days_overdue }} days</span></td>
+          <td><a href="{{ url_for('landlord.lease_detail', lease_id=inv.lease_id) }}" class="btn btn-sm btn-secondary"><i class="bi bi-eye"></i></a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const isDark = ThemeManager.get() !== 'light';
+  const C = getChartColors(isDark);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const chartData = {{ stats.chart_data | tojson }};
+
+  // Revenue vs Expenses bar chart
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'Revenue', data: chartData.map(d=>d.revenue), backgroundColor: C.accentAlpha, borderColor: C.accent, borderWidth: 2, borderRadius: 4 },
+        { label: 'Expenses', data: chartData.map(d=>d.expenses), backgroundColor: C.goldAlpha, borderColor: C.gold, borderWidth: 2, borderRadius: 4 },
+        { label: 'Net', data: chartData.map(d=>d.net), type: 'line', fill: false, borderColor: C.info, borderWidth: 2, tension: 0.4, pointRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true, grid: { color: C.grid }, ticks: { callback: v => 'KSh '+v.toLocaleString() } }, x: { grid: { color: C.grid } } }
+    }
+  });
+
+  // Payment methods doughnut
+  const pmData = {{ stats.payment_methods | tojson }};
+  const pmColors = { mpesa: C.accent, equity_bank: C.gold, kcb_bank: C.info, coop_bank: C.success, cash: C.danger };
+  new Chart(document.getElementById('methodChart'), {
+    type: 'doughnut',
+    data: {
+      labels: pmData.map(d => d.method.replace('_',' ').toUpperCase()),
+      datasets: [{ data: pmData.map(d=>d.total), backgroundColor: pmData.map(d => pmColors[d.method] || C.accent), borderWidth: 2, borderColor: isDark ? '#111911' : '#fff' }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom' } } }
+  });
+});
+</script>
+{% endblock %}

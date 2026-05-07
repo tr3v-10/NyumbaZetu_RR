@@ -1,0 +1,86 @@
+{% extends "shared/base.html" %}
+{% block title %}Visitor Detail #{{ log.id }}{% endblock %}
+{% block page_title %}Visitor Detail{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div><h1 class="page-title">Visit #{{ log.id }}</h1><p class="page-subtitle">{{ log.visited_at.strftime('%A, %d %B %Y at %H:%M:%S') }} EAT</p></div>
+  <a href="{{ url_for('super_admin.visitors') }}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+<div class="d-grid" style="grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Network Identity</div></div>
+    <table class="table-sm"><tbody>
+      <tr><th>IP Address</th><td><code>{{ log.ip_address }}</code></td></tr>
+      <tr><th>Forwarded For</th><td><code>{{ log.forwarded_for or '—' }}</code></td></tr>
+      <tr><th>Real IP</th><td><code>{{ log.real_ip or '—' }}</code></td></tr>
+      <tr><th>CF-Connecting-IP</th><td><code>{{ log.cf_connecting_ip or '—' }}</code></td></tr>
+      <tr><th>MAC Address</th><td><code>{{ log.mac_address or '—' }}</code></td></tr>
+      <tr><th>Fingerprint</th><td style="word-break:break-all;font-size:0.78rem;">{{ log.device_fingerprint or '—' }}</td></tr>
+      <tr><th>Suspicious</th><td>{% if log.is_suspicious %}<span class="badge badge-danger">YES</span>{% else %}<span class="badge badge-success">No</span>{% endif %}</td></tr>
+    </tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Geolocation</div></div>
+    <table class="table-sm"><tbody>
+      <tr><th>Country</th><td>{{ log.country or '—' }} ({{ log.country_code or '—' }})</td></tr>
+      <tr><th>Region</th><td>{{ log.region or '—' }}</td></tr>
+      <tr><th>City</th><td>{{ log.city or '—' }}</td></tr>
+      <tr><th>Latitude</th><td>{{ log.latitude or '—' }}</td></tr>
+      <tr><th>Longitude</th><td>{{ log.longitude or '—' }}</td></tr>
+      <tr><th>Timezone</th><td>{{ log.timezone or '—' }}</td></tr>
+      <tr><th>ISP</th><td>{{ log.isp or '—' }}</td></tr>
+    </tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Device & Browser</div></div>
+    <table class="table-sm"><tbody>
+      <tr><th>Browser</th><td>{{ log.browser or '—' }}</td></tr>
+      <tr><th>OS</th><td>{{ log.os or '—' }}</td></tr>
+      <tr><th>Device Type</th><td>{{ log.device_type or '—' }}</td></tr>
+      <tr><th>Device Brand</th><td>{{ log.device_brand or '—' }}</td></tr>
+      <tr><th>Device Model</th><td>{{ log.device_model or '—' }}</td></tr>
+      <tr><th>Screen</th><td>{{ (log.screen_width|string + '×' + log.screen_height|string) if log.screen_width else '—' }}</td></tr>
+      <tr><th>Pixel Ratio</th><td>{{ log.device_pixel_ratio or '—' }}</td></tr>
+      <tr><th>Color Depth</th><td>{{ log.color_depth or '—' }} bit</td></tr>
+      <tr><th>Language</th><td>{{ log.language or '—' }}</td></tr>
+      <tr><th>Platform</th><td>{{ log.platform or '—' }}</td></tr>
+      <tr><th>DNT</th><td>{{ log.do_not_track or '—' }}</td></tr>
+      <tr><th>Cookies</th><td>{{ 'Enabled' if log.cookie_enabled else 'Disabled' }}</td></tr>
+      <tr><th>Java</th><td>{{ 'Yes' if log.java_enabled else 'No' }}</td></tr>
+    </tbody></table>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Request Details</div></div>
+    <table class="table-sm"><tbody>
+      <tr><th>Method</th><td><span class="badge badge-info">{{ log.method }}</span></td></tr>
+      <tr><th>Path</th><td><code>{{ log.path }}</code></td></tr>
+      <tr><th>Query</th><td><code style="font-size:0.78rem;">{{ log.query_string or '—' }}</code></td></tr>
+      <tr><th>Referrer</th><td style="word-break:break-all;font-size:0.78rem;">{{ log.referrer or '—' }}</td></tr>
+      <tr><th>Origin</th><td>{{ log.origin or '—' }}</td></tr>
+      <tr><th>Host</th><td>{{ log.host or '—' }}</td></tr>
+      <tr><th>Accept-Language</th><td>{{ log.accept_language or '—' }}</td></tr>
+      <tr><th>User</th><td>{% if log.user %}<a href="{{ url_for('super_admin.user_detail', user_id=log.user_id) }}">{{ log.user.full_name }} ({{ log.user.role }})</a>{% else %}Anonymous{% endif %}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+{% if log.user_agent %}
+<div class="card" style="margin-top:20px;">
+  <div class="card-header"><div class="card-title">Raw User-Agent</div></div>
+  <code style="font-size:0.8rem;word-break:break-all;padding:12px;display:block;background:var(--bg-tertiary);border-radius:var(--radius);">{{ log.user_agent }}</code>
+</div>
+{% endif %}
+{% if same_ip_visits %}
+<div class="card" style="margin-top:20px;">
+  <div class="card-header"><div class="card-title">Other Visits from {{ log.ip_address }}</div><span class="badge badge-neutral">{{ same_ip_visits|length }} total</span></div>
+  <div class="table-wrapper"><table><thead><tr><th>Time</th><th>Path</th><th>User</th></tr></thead><tbody>
+    {% for v in same_ip_visits[:20] %}
+    <tr>
+      <td class="text-sm">{{ v.visited_at.strftime('%d/%m %H:%M') }}</td>
+      <td><code style="font-size:0.78rem;">{{ v.path }}</code></td>
+      <td class="text-sm">{{ v.user.full_name if v.user else 'Anon' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody></table></div>
+</div>
+{% endif %}
+{% endblock %}

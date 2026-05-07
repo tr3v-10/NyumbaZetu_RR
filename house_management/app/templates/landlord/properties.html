@@ -1,0 +1,75 @@
+{% extends "shared/base.html" %}
+{% block title %}My Properties{% endblock %}
+{% block page_title %}Properties{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div><h1 class="page-title">My Properties</h1><p class="page-subtitle">{{ properties|length }} properties</p></div>
+  <button class="btn btn-primary" onclick="Modal.open('addPropertyModal')"><i class="bi bi-plus-circle"></i> Add Property</button>
+</div>
+{% if properties %}
+<div class="d-grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">
+  {% for p in properties %}
+  <div class="card" style="cursor:pointer;" onclick="location.href='{{ url_for('landlord.property_detail', property_id=p.id) }}'">
+    <div class="d-flex justify-between align-center" style="margin-bottom:12px;">
+      <div>
+        <div style="font-family:var(--font-head);font-size:1.05rem;font-weight:700;">{{ p.name }}</div>
+        <div class="text-xs text-muted">{{ p.property_reference }} · {{ p.property_type.replace('_',' ')|title }}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:1.3rem;font-weight:700;color:var(--accent);">{{ p.occupancy_rate }}%</div>
+        <div class="text-xs text-muted">occupied</div>
+      </div>
+    </div>
+    <div class="text-sm text-muted" style="margin-bottom:10px;"><i class="bi bi-geo-alt"></i> {{ p.street_address }}, {{ p.county }}</div>
+    <div style="margin-bottom:10px;"><div class="progress"><div class="progress-bar {% if p.occupancy_rate < 50 %}danger{% elif p.occupancy_rate < 80 %}warning{% endif %}" style="width:{{ p.occupancy_rate }}%"></div></div></div>
+    <div class="d-flex gap-3" style="font-size:0.825rem;color:var(--text-secondary);">
+      <span><strong>{{ p.occupied_units }}</strong> occupied</span>
+      <span><strong>{{ p.total_units - p.occupied_units }}</strong> vacant</span>
+      <span><strong>{{ p.total_units }}</strong> total</span>
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;">
+      {% if p.mpesa_paybill %}<span class="badge badge-success"><i class="bi bi-phone"></i> {{ p.mpesa_paybill }}</span>{% endif %}
+      {% if p.bank_name %}<span class="badge badge-info"><i class="bi bi-bank"></i> {{ p.bank_name }}</span>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-state-icon">🏘</div><div class="empty-state-title">No properties yet</div><div class="empty-state-text">Add your first property to get started.</div><button class="btn btn-primary" onclick="Modal.open('addPropertyModal')">Add Property</button></div>
+{% endif %}
+<div class="modal-backdrop" id="addPropertyModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header"><span class="modal-title">Add New Property</span><button class="modal-close" data-modal-close>×</button></div>
+    <form method="POST" action="{{ url_for('landlord.properties') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Property Name *</label><input class="form-control" name="name" required placeholder="e.g. Greenview Apartments"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Type</label>
+            <select class="form-control" name="property_type">
+              <option value="apartment_block">Apartment Block</option><option value="maisonette">Maisonette</option>
+              <option value="townhouse">Townhouse</option><option value="commercial">Commercial</option><option value="standalone">Standalone</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">County *</label><input class="form-control" name="county" required placeholder="e.g. Nairobi"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Sub County</label><input class="form-control" name="sub_county" placeholder="e.g. Westlands"/></div>
+          <div class="form-group"><label class="form-label">Ward</label><input class="form-control" name="ward" placeholder="e.g. Parklands"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Street Address *</label><input class="form-control" name="street_address" required placeholder="e.g. Off Waiyaki Way, Westlands"/></div>
+        <div class="divider"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">M-Pesa Paybill/Till</label><input class="form-control" name="mpesa_paybill" placeholder="e.g. 400200"/></div>
+          <div class="form-group"><label class="form-label">M-Pesa Account Name</label><input class="form-control" name="mpesa_account_name" placeholder="e.g. RENT GREENVIEW"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Bank Name</label><input class="form-control" name="bank_name" placeholder="Equity / KCB / Co-op"/></div>
+          <div class="form-group"><label class="form-label">Bank Account No.</label><input class="form-control" name="bank_account_number" placeholder="Account number"/></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-modal-close>Cancel</button><button type="submit" class="btn btn-primary">Save Property</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "shared/base.html" %}
+{% block title %}Leases{% endblock %}
+{% block page_title %}Leases{% endblock %}
+{% block content %}
+<div class="page-header page-header-row">
+  <div><h1 class="page-title">Leases</h1><p class="page-subtitle">{{ leases.total }} total</p></div>
+  <a href="{{ url_for('landlord.create_lease') }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> New Lease</a>
+</div>
+<div class="tabs">
+  {% for s in ['all','active','expired','terminated','draft'] %}
+  <a href="{{ url_for('landlord.leases', status=s) }}" class="tab {{ 'active' if status_filter==s or (s=='all' and not status_filter) }}">{{ s|title }}</a>
+  {% endfor %}
+</div>
+<div class="card"><div class="table-wrapper"><table>
+  <thead><tr><th>Lease No.</th><th>Tenant</th><th>Unit</th><th>Rent/mo</th><th>Period</th><th>Status</th><th>Balance Due</th><th></th></tr></thead>
+  <tbody>
+    {% for l in leases.items %}
+    <tr>
+      <td><code style="font-size:0.8rem;">{{ l.lease_number }}</code></td>
+      <td><span style="font-weight:500;">{{ l.tenant.full_name }}</span><div class="text-xs text-muted">{{ l.tenant.phone or '' }}</div></td>
+      <td>{{ l.unit.unit_number }}<div class="text-xs text-muted">{{ l.unit.property.name }}</div></td>
+      <td class="font-bold text-accent">{{ l.rent_amount | kes }}</td>
+      <td class="text-sm text-muted">{{ l.start_date.strftime('%d/%m/%Y') }}<br/>→ {{ l.end_date.strftime('%d/%m/%Y') }}</td>
+      <td>
+        <span class="badge {% if l.status=='active' %}badge-success{% elif l.status=='expired' %}badge-warning{% elif l.status=='terminated' %}badge-danger{% else %}badge-neutral{% endif %}">{{ l.status }}</span>
+        {% if l.status=='active' and l.days_remaining < 60 %}<div class="text-xs" style="color:var(--warning);">⚠ {{ l.days_remaining }}d left</div>{% endif %}
+      </td>
+      <td>{% if l.balance_due > 0 %}<span class="text-danger font-bold">{{ l.balance_due | kes }}</span>{% else %}<span class="text-success">Nil</span>{% endif %}</td>
+      <td><a href="{{ url_for('landlord.lease_detail', lease_id=l.id) }}" class="btn btn-sm btn-secondary"><i class="bi bi-eye"></i></a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8"><div class="empty-state" style="padding:30px;"><div class="empty-state-icon">📄</div><div class="empty-state-title">No leases found.</div></div></td></tr>
+    {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}
